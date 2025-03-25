@@ -1,0 +1,61 @@
+[2025-03-25T20:20:12Z] INFO: Starting Durak game
+[2025-03-25T20:20:12Z] INFO: Creating new App instance
+[2025-03-25T20:20:12Z] DEBUG: Creating new GameState
+[2025-03-25T20:20:12Z] DEBUG: Adding player: Player (type: Human)
+[2025-03-25T20:20:12Z] DEBUG: Adding player: Computer (type: Computer)
+[2025-03-25T20:20:12Z] INFO: Creating new AI player with difficulty: Medium
+[2025-03-25T20:20:12Z] INFO: App initialized, starting main loop
+[2025-03-25T20:34:25Z] DEBUG: Start game key pressed
+[2025-03-25T20:34:25Z] INFO: Starting new game
+[2025-03-25T20:34:25Z] INFO: Setting up new game with 2 players
+[2025-03-25T20:34:25Z] INFO: Deck shuffled, trump suit: Some(Hearts)
+[2025-03-25T20:34:25Z] DEBUG: Dealing 6 cards to Player
+[2025-03-25T20:34:25Z] DEBUG: Dealing 6 cards to Computer
+[2025-03-25T20:34:25Z] DEBUG: Determining first player
+[2025-03-25T20:34:25Z] DEBUG: Player 0 has trump card: Card { suit: Hearts, rank: Ten }
+[2025-03-25T20:34:25Z] DEBUG: Player 1 has trump card: Card { suit: Hearts, rank: Six }
+[2025-03-25T20:34:25Z] DEBUG: First player is 1 with lowest trump
+[2025-03-25T20:34:25Z] INFO: First attacker: 1 (Computer), first defender: 0 (Player)
+[2025-03-25T20:34:25Z] DEBUG: Checking if AI goes first
+[2025-03-25T20:34:25Z] DEBUG: Starting AI turn processing loop
+[2025-03-25T20:34:25Z] DEBUG: AI is attacking (player 1)
+[2025-03-25T20:34:25Z] DEBUG: AI considering attack move for player 1
+[2025-03-25T20:34:25Z] DEBUG: AI chose attack card index: 1
+[2025-03-25T20:34:25Z] INFO: AI chose to attack with card index 1
+[2025-03-25T20:34:25Z] DEBUG: Player 1 attempting to attack with card index 1
+[2025-03-25T20:34:25Z] INFO: First attack: Player 1 played 6♦
+[2025-03-25T20:34:25Z] DEBUG: Not AI's turn, current player 0
+[2025-03-25T20:34:25Z] DEBUG: AI processing complete
+[2025-03-25T20:34:25Z] INFO: Human chose to take cards
+[2025-03-25T20:34:25Z] INFO: Player 0 taking 1 cards from table
+[2025-03-25T20:34:25Z] DEBUG: Total cards taken: 1
+[2025-03-25T20:34:25Z] DEBUG: Cards being taken: [Card { suit: Diamonds, rank: Six }]
+[2025-03-25T20:34:25Z] DEBUG: Game phase changed to Drawing after taking cards
+[2025-03-25T20:34:25Z] DEBUG: Successfully took cards, now drawing new cards
+[2025-03-25T20:34:25Z] DEBUG: Starting draw cards phase
+[2025-03-25T20:34:25Z] DEBUG: Moving 0 card pairs to discard pile
+[2025-03-25T20:34:25Z] DEBUG: Discard pile now has 0 cards
+[2025-03-25T20:34:25Z] DEBUG: Player 1 drawing 1 cards to replenish hand
+[2025-03-25T20:34:25Z] DEBUG: Player 1 drew cards: [Card { suit: Spades, rank: Seven }]
+[2025-03-25T20:34:25Z] DEBUG: After drawing, checking game phase: Drawing
+[2025-03-25T20:34:25Z] INFO: Defender successfully defended, becomes new attacker
+[2025-03-25T20:34:25Z] DEBUG: After player rotation, current attacker: 0, current defender: 1
+[2025-03-25T20:34:25Z] INFO: Next round: attacker 0 (was 1), defender 1 (was 0)
+[2025-03-25T20:34:25Z] DEBUG: Changing game phase from Drawing to Attack
+[2025-03-25T20:34:25Z] DEBUG: After drawing cards, processing AI turn
+[2025-03-25T20:34:25Z] DEBUG: Starting AI turn processing loop
+[2025-03-25T20:34:25Z] DEBUG: Not AI's turn, current player 0
+[2025-03-25T20:34:25Z] DEBUG: AI processing complete
+[2025-03-25T20:34:25Z] INFO: Human chose to pass
+[2025-03-25T20:34:25Z] WARN: Draw cards attempted outside drawing phase: Attack
+[2025-03-25T20:34:25Z] DEBUG: Starting AI turn processing loop
+[2025-03-25T20:34:25Z] DEBUG: Not AI's turn, current player 0
+[2025-03-25T20:34:25Z] DEBUG: AI processing complete
+[2025-03-25T20:34:25Z] DEBUG: Take cards key pressed outside of defense phase
+[2025-03-25T20:34:25Z] INFO: Human chose to pass
+[2025-03-25T20:34:25Z] WARN: Draw cards attempted outside drawing phase: Attack
+[2025-03-25T20:34:25Z] DEBUG: Starting AI turn processing loop
+[2025-03-25T20:34:25Z] DEBUG: Not AI's turn, current player 0
+[2025-03-25T20:34:25Z] DEBUG: AI processing complete
+[2025-03-25T20:34:25Z] DEBUG: Take cards key pressed outside of defense phase
+[2025-03-25T20:34:25Z] DEBUG: Enter pressed but no card selected
