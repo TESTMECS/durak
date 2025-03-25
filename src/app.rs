@@ -183,6 +183,15 @@ impl App {
                     } else {
                         debug("AI attack successful, continuing processing");
                         log_debug!("AI attack successful, continuing processing");
+                        
+                        // Check if AI has emptied its hand and won
+                        if self.game_state.players()[current_player_idx].is_empty_hand() {
+                            info(format!("AI player {} won by playing last card!", current_player_idx));
+                            log_info!("AI player {} won by playing last card!", current_player_idx);
+                            self.game_state.set_winner(current_player_idx);
+                            self.app_state = AppState::GameOver;
+                            break;
+                        }
                     }
                 } else {
                     // AI passes
@@ -291,6 +300,16 @@ impl App {
                     } else {
                         debug("AI successfully defended, checking for more attacks");
                         log_debug!("AI successfully defended, checking for more attacks");
+                        
+                        // Check if AI has emptied its hand and won
+                        if self.game_state.players()[current_player_idx].is_empty_hand() {
+                            info(format!("AI player {} won by playing last defensive card!", current_player_idx));
+                            log_info!("AI player {} won by playing last defensive card!", current_player_idx);
+                            self.game_state.set_winner(current_player_idx);
+                            self.app_state = AppState::GameOver;
+                            break;
+                        }
+                        
                         // Continue the loop to see if there are more attacks to defend
                     }
                 } else {

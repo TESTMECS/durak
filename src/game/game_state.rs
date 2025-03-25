@@ -524,8 +524,7 @@ impl GameState {
                         idx,
                         player.name()
                     );
-                    self.winner = Some(idx);
-                    self.game_phase = GamePhase::GameOver;
+                    self.set_winner(idx);
                     return;
                 }
             }
@@ -598,5 +597,16 @@ impl GameState {
             state.current_attacker, state.current_defender);
             
         state
+    }
+
+    // Set the winner and update game phase
+    pub fn set_winner(&mut self, player_idx: usize) {
+        if player_idx < self.players.len() {
+            info!("Setting player {} ({}) as the winner", player_idx, self.players[player_idx].name());
+            self.winner = Some(player_idx);
+            self.game_phase = GamePhase::GameOver;
+        } else {
+            warn!("Attempted to set invalid player index {} as winner", player_idx);
+        }
     }
 }
