@@ -2,6 +2,14 @@
 
 A terminal-based implementation of the classic Russian card game "Durak" using Rust and Ratatui.
 
+## Future Todos
+
+- Rules page on Main Menu.
+- Strategy Page on Main Menu.
+- Multiple Card Attacking and Defending.
+- More Intelligent AI Defender.
+- Passing when Attacking with same rank card rule. (Difficult)
+
 ## Game Overview
 
 Durak is a popular Russian card game where the objective is to get rid of all your cards. The player who is left with cards at the end of the game is the "durak" (fool).
@@ -41,7 +49,9 @@ Durak is a popular Russian card game where the objective is to get rid of all yo
   - `q`: Quit
   - `d`: Toggle debug overlay
 
-## AI Opponents
+## AI Opponents (WIP)
+
+- Work in progress, will just choose lowest card to make a valid move atp.
 
 The game includes an AI opponent with adjustable difficulty:
 

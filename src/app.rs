@@ -41,7 +41,7 @@ impl App {
             game_state,
             app_state: AppState::MainMenu,
             selected_card_idx: None,
-            ai_player: AiPlayer::new(AiDifficulty::Medium),
+            ai_player: AiPlayer::new(AiDifficulty::Medium), // DEFAULT DIFFICULTY
             should_quit: false,
             show_debug: false,
         }
@@ -92,11 +92,18 @@ impl App {
         }
 
         // Ensure we're in a proper phase for AI to act
-        if !matches!(*self.game_state.game_phase(), GamePhase::Attack | GamePhase::Defense) {
-            debug(format!("Not in Attack/Defense phase, skipping AI processing: {:?}", 
-                self.game_state.game_phase()));
-            log_debug!("Not in Attack/Defense phase, skipping AI processing: {:?}", 
-                self.game_state.game_phase());
+        if !matches!(
+            *self.game_state.game_phase(),
+            GamePhase::Attack | GamePhase::Defense
+        ) {
+            debug(format!(
+                "Not in Attack/Defense phase, skipping AI processing: {:?}",
+                self.game_state.game_phase()
+            ));
+            log_debug!(
+                "Not in Attack/Defense phase, skipping AI processing: {:?}",
+                self.game_state.game_phase()
+            );
             return;
         }
 
@@ -145,7 +152,10 @@ impl App {
                     "Not AI's turn, current player {} is human",
                     current_player_idx
                 ));
-                log_debug!("Not AI's turn, current player {} is human", current_player_idx);
+                log_debug!(
+                    "Not AI's turn, current player {} is human",
+                    current_player_idx
+                );
                 break;
             }
 
@@ -162,9 +172,12 @@ impl App {
                 debug(format!("AI is attacking (player {})", current_player_idx));
                 log_debug!("AI is attacking (player {})", current_player_idx);
                 let player_hand_size = self.game_state.players()[current_player_idx].hand_size();
-                debug(format!("AI attacker has {} cards in hand", player_hand_size));
+                debug(format!(
+                    "AI attacker has {} cards in hand",
+                    player_hand_size
+                ));
                 log_debug!("AI attacker has {} cards in hand", player_hand_size);
-                
+
                 if let Some(card_idx) = self
                     .ai_player
                     .make_attack_move(&self.game_state, current_player_idx)
@@ -183,10 +196,13 @@ impl App {
                     } else {
                         debug("AI attack successful, continuing processing");
                         log_debug!("AI attack successful, continuing processing");
-                        
+
                         // Check if AI has emptied its hand and won
                         if self.game_state.players()[current_player_idx].is_empty_hand() {
-                            info(format!("AI player {} won by playing last card!", current_player_idx));
+                            info(format!(
+                                "AI player {} won by playing last card!",
+                                current_player_idx
+                            ));
                             log_info!("AI player {} won by playing last card!", current_player_idx);
                             self.game_state.set_winner(current_player_idx);
                             self.app_state = AppState::GameOver;
@@ -197,18 +213,20 @@ impl App {
                     // AI passes
                     info("AI chose to pass (no valid attack)");
                     log_info!("AI chose to pass (no valid attack)");
-                    
+
                     // Check if we should go to drawing phase
-                    let need_to_draw = self.game_state.players().iter().any(|p| p.hand_size() < 6) && 
-                                     !self.game_state.deck().is_empty();
-                    
+                    let need_to_draw = self.game_state.players().iter().any(|p| p.hand_size() < 6)
+                        && !self.game_state.deck().is_empty();
+
                     if need_to_draw {
                         debug("AI passing and there are cards to draw");
                         log_debug!("AI passing and there are cards to draw");
                         self.game_state.draw_cards();
                     } else {
                         debug("AI passing but no cards need to be drawn, directly changing turns");
-                        log_debug!("AI passing but no cards need to be drawn, directly changing turns");
+                        log_debug!(
+                            "AI passing but no cards need to be drawn, directly changing turns"
+                        );
                         // Skip drawing phase and just change the turns
                         // Logic to advance to next player without drawing
                         // This simulates what draw_cards would do without trying to draw
@@ -227,9 +245,12 @@ impl App {
                 debug(format!("AI is defending (player {})", current_player_idx));
                 log_debug!("AI is defending (player {})", current_player_idx);
                 let player_hand_size = self.game_state.players()[current_player_idx].hand_size();
-                debug(format!("AI defender has {} cards in hand", player_hand_size));
+                debug(format!(
+                    "AI defender has {} cards in hand",
+                    player_hand_size
+                ));
                 log_debug!("AI defender has {} cards in hand", player_hand_size);
-                
+
                 if self
                     .ai_player
                     .should_take_cards(&self.game_state, current_player_idx)
@@ -245,9 +266,10 @@ impl App {
                         break;
                     } else {
                         // Check if we need to draw cards
-                        let need_to_draw = self.game_state.players().iter().any(|p| p.hand_size() < 6) && 
-                                           !self.game_state.deck().is_empty();
-                        
+                        let need_to_draw =
+                            self.game_state.players().iter().any(|p| p.hand_size() < 6)
+                                && !self.game_state.deck().is_empty();
+
                         if need_to_draw {
                             debug("AI took cards and there are cards to draw");
                             log_debug!("AI took cards and there are cards to draw");
@@ -284,15 +306,22 @@ impl App {
                             break;
                         } else {
                             // Check if players need to draw cards
-                            let need_to_draw = self.game_state.players().iter().any(|p| p.hand_size() < 6) && 
-                                               !self.game_state.deck().is_empty();
-                            
+                            let need_to_draw =
+                                self.game_state.players().iter().any(|p| p.hand_size() < 6)
+                                    && !self.game_state.deck().is_empty();
+
                             if need_to_draw {
                                 debug("AI defense failed, took cards and there are cards to draw");
-                                log_debug!("AI defense failed, took cards and there are cards to draw");
+                                log_debug!(
+                                    "AI defense failed, took cards and there are cards to draw"
+                                );
                             } else {
-                                debug("AI defense failed, took cards but no cards need to be drawn");
-                                log_debug!("AI defense failed, took cards but no cards need to be drawn");
+                                debug(
+                                    "AI defense failed, took cards but no cards need to be drawn",
+                                );
+                                log_debug!(
+                                    "AI defense failed, took cards but no cards need to be drawn"
+                                );
                             }
                             self.game_state.draw_cards();
                             break; // Break after taking cards
@@ -300,16 +329,22 @@ impl App {
                     } else {
                         debug("AI successfully defended, checking for more attacks");
                         log_debug!("AI successfully defended, checking for more attacks");
-                        
+
                         // Check if AI has emptied its hand and won
                         if self.game_state.players()[current_player_idx].is_empty_hand() {
-                            info(format!("AI player {} won by playing last defensive card!", current_player_idx));
-                            log_info!("AI player {} won by playing last defensive card!", current_player_idx);
+                            info(format!(
+                                "AI player {} won by playing last defensive card!",
+                                current_player_idx
+                            ));
+                            log_info!(
+                                "AI player {} won by playing last defensive card!",
+                                current_player_idx
+                            );
                             self.game_state.set_winner(current_player_idx);
                             self.app_state = AppState::GameOver;
                             break;
                         }
-                        
+
                         // Continue the loop to see if there are more attacks to defend
                     }
                 } else {
@@ -324,9 +359,10 @@ impl App {
                         break;
                     } else {
                         // Check if we need to draw cards
-                        let need_to_draw = self.game_state.players().iter().any(|p| p.hand_size() < 6) && 
-                                           !self.game_state.deck().is_empty();
-                        
+                        let need_to_draw =
+                            self.game_state.players().iter().any(|p| p.hand_size() < 6)
+                                && !self.game_state.deck().is_empty();
+
                         if need_to_draw {
                             debug("AI was forced to take cards and there are cards to draw");
                             log_debug!("AI was forced to take cards and there are cards to draw");
@@ -370,9 +406,11 @@ impl App {
                     }
                 }
             }
-            
+
             // After a complete AI action, check if it's still the AI's turn
-            if self.game_state.players()[self.current_player_index()].player_type() == &PlayerType::Computer {
+            if self.game_state.players()[self.current_player_index()].player_type()
+                == &PlayerType::Computer
+            {
                 debug("It's still AI's turn, continuing the processing loop");
                 log_debug!("It's still AI's turn, continuing the processing loop");
             } else {
@@ -391,7 +429,7 @@ impl App {
         match *self.game_state.game_phase() {
             GamePhase::Attack => self.game_state.current_attacker(),
             GamePhase::Defense => self.game_state.current_defender(),
-            _ => self.game_state.current_attacker() // Default to attacker for other phases
+            _ => self.game_state.current_attacker(), // Default to attacker for other phases
         }
     }
 
@@ -410,27 +448,29 @@ impl App {
         if *self.game_state.game_phase() == GamePhase::Drawing {
             debug("Key pressed during Drawing phase - processing draw cards");
             log_debug!("Key pressed during Drawing phase - processing draw cards");
-            
+
             // Call draw_cards to attempt to exit the Drawing phase
             self.game_state.draw_cards();
-            
+
             // If we're still in Drawing phase, something is wrong - force it
             if *self.game_state.game_phase() == GamePhase::Drawing {
                 warn("Drawing phase is stuck, forcing transition to Attack phase");
                 self.game_state = GameState::force_attack_phase(self.game_state.clone());
             }
-            
+
             // Process AI turn after exiting Drawing phase, regardless of how we exited
             debug("Checking if AI should play after exiting Drawing phase");
             log_debug!("Checking if AI should play after exiting Drawing phase");
-            
-            if *self.game_state.game_phase() == GamePhase::Attack &&
-               self.game_state.players()[self.game_state.current_attacker()].player_type() == &PlayerType::Computer {
+
+            if *self.game_state.game_phase() == GamePhase::Attack
+                && self.game_state.players()[self.game_state.current_attacker()].player_type()
+                    == &PlayerType::Computer
+            {
                 debug("Current attacker is AI - processing AI turn after Drawing phase");
                 log_debug!("Current attacker is AI - processing AI turn after Drawing phase");
                 self.process_ai_turn();
             }
-            
+
             return;
         }
 
@@ -439,7 +479,7 @@ impl App {
             self.toggle_debug();
             return;
         }
-        
+
         match self.app_state {
             AppState::MainMenu => match key {
                 KeyCode::Char('s') => {
@@ -615,35 +655,46 @@ impl App {
                                             log_debug!(
                                                 "Successfully took cards, now drawing new cards"
                                             );
-                                            
+
                                             // Check if players actually need to draw
-                                            let need_to_draw = self.game_state.players().iter().any(|p| p.hand_size() < 6) && 
-                                                              !self.game_state.deck().is_empty();
-                                            
+                                            let need_to_draw = self
+                                                .game_state
+                                                .players()
+                                                .iter()
+                                                .any(|p| p.hand_size() < 6)
+                                                && !self.game_state.deck().is_empty();
+
                                             if need_to_draw {
-                                                debug("Human took cards and there are cards to draw");
-                                                log_debug!("Human took cards and there are cards to draw");
+                                                debug(
+                                                    "Human took cards and there are cards to draw",
+                                                );
+                                                log_debug!(
+                                                    "Human took cards and there are cards to draw"
+                                                );
                                             } else {
                                                 debug("Human took cards but no cards need to be drawn - direct turn change");
                                                 log_debug!("Human took cards but no cards need to be drawn - direct turn change");
                                             }
-                                            
+
                                             // Check if deck is empty before drawing
                                             if self.game_state.deck().is_empty() {
                                                 debug("Deck is empty when taking cards, proceeding with turn change");
                                                 log_debug!("Deck is empty when taking cards, proceeding with turn change");
                                             }
-                                            
+
                                             self.game_state.draw_cards();
-                                            
+
                                             // Check if game is now over after taking cards
-                                            if *self.game_state.game_phase() == GamePhase::GameOver {
+                                            if *self.game_state.game_phase() == GamePhase::GameOver
+                                            {
                                                 info("Game is over after taking cards");
                                                 log_info!("Game is over after taking cards");
                                                 self.app_state = AppState::GameOver;
                                             } else {
                                                 debug("After drawing cards, processing AI turn");
-                                                log_debug!("After drawing cards, processing AI turn");
+                                                log_debug!(
+                                                    "After drawing cards, processing AI turn"
+                                                );
                                                 self.process_ai_turn();
                                             }
                                         }
@@ -653,17 +704,21 @@ impl App {
                                             "Take cards key pressed outside of defense phase"
                                         );
                                     }
-                                },
+                                }
                                 KeyCode::Char('p') => {
                                     // Pass (in attack phase)
                                     if *self.game_state.game_phase() == GamePhase::Attack {
                                         info("Human chose to pass");
                                         log_info!("Human chose to pass");
-                                        
+
                                         // Check if we actually need to draw any cards
-                                        let need_to_draw = self.game_state.players().iter().any(|p| p.hand_size() < 6) && 
-                                                          !self.game_state.deck().is_empty();
-                                        
+                                        let need_to_draw = self
+                                            .game_state
+                                            .players()
+                                            .iter()
+                                            .any(|p| p.hand_size() < 6)
+                                            && !self.game_state.deck().is_empty();
+
                                         if need_to_draw {
                                             debug("Human passed and there are cards to draw");
                                             log_debug!("Human passed and there are cards to draw");
@@ -671,15 +726,15 @@ impl App {
                                             debug("Human passed but no cards need to be drawn - direct turn change");
                                             log_debug!("Human passed but no cards need to be drawn - direct turn change");
                                         }
-                                        
+
                                         // Check if deck is empty - we still need to change turns
                                         if self.game_state.deck().is_empty() {
                                             debug("Deck is empty when passing, still managing turn change");
                                             log_debug!("Deck is empty when passing, still managing turn change");
                                         }
-                                        
+
                                         self.game_state.draw_cards();
-                                        
+
                                         // Check if game is now over after passing
                                         if *self.game_state.game_phase() == GamePhase::GameOver {
                                             info("Game is over after passing");
@@ -692,7 +747,7 @@ impl App {
                                         debug("Pass key pressed outside of attack phase");
                                         log_debug!("Pass key pressed outside of attack phase");
                                     }
-                                },
+                                }
                                 KeyCode::Char('q') => {
                                     debug("Quit key pressed during game");
                                     log_debug!("Quit key pressed during game");

@@ -23,43 +23,53 @@ impl AiPlayer {
 
     pub fn make_attack_move(&self, game_state: &GameState, player_idx: usize) -> Option<usize> {
         // Always log when this function is called for debugging
-        debug!("AI attempting to make attack move for player {}", player_idx);
-        
+        debug!(
+            "AI attempting to make attack move for player {}",
+            player_idx
+        );
+
         let player = &game_state.players()[player_idx];
         let hand = player.hand();
-        
+
         if hand.is_empty() {
             debug!("AI player {} has no cards to attack with", player_idx);
             return None;
         }
-        
+
         // First attack - play lowest card
         if game_state.table_cards().is_empty() {
             debug!("Table is empty, AI choosing lowest card for first attack");
-            
+
             // Find lowest non-trump card first if possible
             let trump_suit = game_state.trump_suit();
-            
+
             // First try to find a non-trump card
-            let non_trump_idx = hand.iter().enumerate()
+            let non_trump_idx = hand
+                .iter()
+                .enumerate()
                 .filter(|(_, card)| trump_suit.map_or(true, |t| card.suit != t))
                 .min_by_key(|(_, card)| card.rank as usize)
                 .map(|(idx, _)| idx);
-                
+
             // If we found a non-trump card, use it
             if let Some(idx) = non_trump_idx {
                 debug!("AI selected non-trump card {} for first attack", hand[idx]);
                 return Some(idx);
             }
-            
+
             // Otherwise use any card (which will be a trump)
             let idx = 0; // Since we already checked hand is not empty
-            debug!("AI selected card {} for first attack (only had trumps)", hand[idx]);
+            debug!(
+                "AI selected card {} for first attack (only had trumps)",
+                hand[idx]
+            );
             return Some(idx);
         }
-        
+
         // Additional attack - need to match ranks on the table
-        let valid_ranks: Vec<_> = game_state.table_cards().iter()
+        let valid_ranks: Vec<_> = game_state
+            .table_cards()
+            .iter()
             .flat_map(|(attack, defense)| {
                 let mut ranks = vec![attack.rank];
                 if let Some(def) = defense {
@@ -68,26 +78,29 @@ impl AiPlayer {
                 ranks
             })
             .collect();
-            
+
         debug!("Valid ranks for additional attack: {:?}", valid_ranks);
-        
+
         // Find cards in our hand that match these ranks
-        let valid_attacks: Vec<_> = hand.iter().enumerate()
+        let valid_attacks: Vec<_> = hand
+            .iter()
+            .enumerate()
             .filter(|(_, card)| valid_ranks.contains(&card.rank))
             .collect();
-            
+
         debug!("Found {} potential attack cards", valid_attacks.len());
-        
+
         // If we have valid attack cards, choose the lowest one
         if !valid_attacks.is_empty() {
             // Sort by rank and prefer non-trumps
             let trump_suit = game_state.trump_suit();
-            let best_idx = valid_attacks.iter()
+            let best_idx = valid_attacks
+                .iter()
                 .min_by(|(_, a), (_, b)| {
                     // First compare if one is trump and other is not
                     let a_is_trump = trump_suit.map_or(false, |t| a.suit == t);
                     let b_is_trump = trump_suit.map_or(false, |t| b.suit == t);
-                    
+
                     if a_is_trump && !b_is_trump {
                         std::cmp::Ordering::Greater // Prefer non-trump, so a > b
                     } else if !a_is_trump && b_is_trump {
@@ -98,13 +111,12 @@ impl AiPlayer {
                     }
                 })
                 .map(|(idx, _)| *idx);
-                
+
             if let Some(idx) = best_idx {
                 debug!("AI chose to attack with card {} ({})", idx, hand[idx]);
                 return Some(idx);
             }
         }
-        
         debug!("AI found no valid attack moves, passing turn");
         None
     }
