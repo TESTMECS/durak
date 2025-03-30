@@ -84,7 +84,7 @@ impl Player {
             .min_by_key(|(_, card)| card.rank)
             .map(|(idx, &card)| (idx, card))
     }
-
+    #[allow(dead_code)]
     pub fn get_valid_defenses(
         &self,
         attacking_card: &Card,
@@ -111,4 +111,3 @@ impl Player {
             .map(|(idx, &card)| (idx, card))
     }
 }
-

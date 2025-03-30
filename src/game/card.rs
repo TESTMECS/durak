@@ -83,7 +83,7 @@ impl Card {
     }
 
     /// Determines if this card can beat another card in Durak rules
-    /// 
+    ///
     /// A card can beat another card if:
     /// 1. It is the same suit but higher rank, OR
     /// 2. It is a trump card and the other card is not
@@ -98,13 +98,13 @@ impl Card {
         // Case 1: Same suit - higher rank wins
         if self.suit == other.suit {
             return self.rank > other.rank;
-        } 
+        }
         // Case 2: Different suits - trump beats non-trump
         else if self.suit == trump_suit && other.suit != trump_suit {
             return true;
         }
-        // All other cases - can't beat
-        return false;
+        // Default: Higher rank wins
+        self.rank > other.rank
     }
 }
 
@@ -113,4 +113,3 @@ impl fmt::Display for Card {
         write!(f, "{}{}", self.rank.symbol(), self.suit.symbol())
     }
 }
-

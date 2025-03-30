@@ -1,128 +1,141 @@
 # Durak Card Game
 
-A terminal-based implementation of the classic Russian card game "Durak" using Rust and Ratatui.
+A terminal-based implementation of the popular Russian card game Durak, built with Rust and [ratatui](https://github.com/ratatui-org/ratatui).
 
-## Future Todos
+## Game Rules
 
-- Rules page on Main Menu.
-- Strategy Page on Main Menu.
-- Multiple Card Attacking and Defending.
-- More Intelligent AI Defender.
-- Passing when Attacking with same rank card rule. (Difficult)
+Durak is a card game played with 2-6 players using a 36-card deck (cards 6 through Ace).
 
-## Game Overview
+### Objective
+Get rid of all your cards. The last player with cards is the "durak" (fool).
 
-Durak is a popular Russian card game where the objective is to get rid of all your cards. The player who is left with cards at the end of the game is the "durak" (fool).
+### Setup
+1. Each player receives 6 cards
+2. The next card determines the trump suit
+3. The player with the lowest trump card goes first
 
-## Rules
+### Gameplay
+1. The attacker plays a card
+2. The defender must beat it with a higher card of the same suit or a trump
+3. If defense is successful, the defender becomes the next attacker
+4. If the defender can't or won't defend, they pick up all cards on the table, and the next player becomes the attacker
+5. After each round, players draw back up to 6 cards (attacker draws first)
+6. Once the deck is empty, players with no cards are out of the game
+7. The last player with cards is the "durak"
 
-1. **Setup**: Each player is dealt 6 cards from a 36-card deck (from 6 to Ace).
-2. **Trump Suit**: The bottom card of the deck determines the trump suit, which has priority over other suits.
-3. **First Player**: The player with the lowest trump card goes first.
-4. **Attack & Defense**:
-   - The attacker plays a card; the defender must beat it with a higher card of the same suit or a trump card.
-   - If successfully defended, the attacker can add cards of the same rank as cards on the table.
-   - If the defender can't or doesn't want to defend, they pick up all the cards on the table.
-   - After a successful defense, the defender becomes the next attacker.
-5. **Drawing**: After each round, players draw from the deck to maintain 6 cards in hand, starting with the attacker.
-6. **End Game**: Once the deck is empty and a player has no cards left, that player is out. The last player with cards is the "durak".
+### Multiple Card Attacks
+- Players can attack with multiple cards of the same rank
+- The defender must defend against each card separately
+- The total number of attack cards cannot exceed the defender's hand size
+- Additional attack cards can only be played if their rank already exists on the table
+- Use 'M' to toggle multiple selection mode, Space to select cards, Enter to play all selected cards
 
-## Controls
+## Game Controls
 
-- **Main Menu**:
+### Main Menu
+- `S`: Start new game
+- `R`: View rules
+- `Q`: Quit
 
-  - `s`: Start a new game
-  - `q`: Quit
-  - `d`: Toggle debug overlay
+### During Game
+- `←/→`: Select card
+- `M`: Toggle multiple selection mode
+- `Space`: Toggle card selection in multi-select mode
+- `Enter`: Play selected card(s)
+- `P`: Pass (when attacking)
+- `T`: Take cards (when defending)
+- `Q`: Quit to main menu
+- `D`: Toggle debug overlay
 
-- **During Game**:
+### Game Over
+- `N`: New game
+- `Q`: Quit
 
-  - `←/→` or `↑/↓`: Navigate cards in hand
-  - `Enter`: Play selected card
-  - `t`: Take cards (when defending)
-  - `p`: Pass (when attacking)
-  - `q`: Quit
-  - `d`: Toggle debug overlay
+## Game Flow Chart
 
-- **Game Over**:
-  - `n`: New game
-  - `q`: Quit
-  - `d`: Toggle debug overlay
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│             │     │             │     │             │     │             │
+│  Main Menu  │────►│  Game Setup │────►│Attack Phase │────►│Defense Phase│
+│             │     │             │     │             │     │             │
+└─────────────┘     └─────────────┘     └──────┬──────┘     └──────┬──────┘
+       ▲                                        │                   │
+       │                                        │                   │
+       │                                        │                   │
+       │                                        ▼                   ▼
+       │                                 ┌─────────────┐     ┌─────────────┐
+       │                                 │             │     │             │
+       │                                 │  Pass Turn  │     │  Take Cards │
+       │                                 │             │     │             │
+       │                                 └──────┬──────┘     └──────┬──────┘
+       │                                        │                   │
+       │                                        ▼                   │
+       │                                 ┌─────────────┐            │
+       │                                 │             │            │
+       │                                 │Drawing Phase│◄───────────┘
+       │                                 │             │
+       │                                 └──────┬──────┘
+       │                                        │
+       │                                        │
+       │                                        ▼
+       │                                 ┌─────────────┐
+       │                                 │  Check for  │
+       │                                 │   Winner    │──┐
+       │                                 │             │  │
+       │                                 └─────────────┘  │
+       │                                                  │
+       │                                                  ▼
+       │                                           ┌─────────────┐
+       │                                           │             │
+       └───────────────────────────────────────────┤  Game Over  │
+                                                   │             │
+                                                   └─────────────┘
+```
 
-## AI Opponents (WIP)
+## Building and Running
 
-- Work in progress, will just choose lowest card to make a valid move atp.
-
-The game includes an AI opponent with adjustable difficulty:
-
-- Easy: Makes random valid moves
-- Medium: Makes more strategic moves
-- Hard: Uses advanced strategy and considers card values
-
-## Installation
-
-### Prerequisites
-
-- Rust and Cargo installed
-
-### Building and Running
+1. Install Rust: https://www.rust-lang.org/tools/install
+2. Clone this repository
+3. Run the game:
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/durak.git
-cd durak
-
-# Build and run
 cargo run
+```
 
-# For release version
+For better performance, use the release build:
+
+```bash
 cargo run --release
 ```
 
-## Debugging
+## AI Difficulty Levels
 
-The game includes a built-in debug overlay that can be toggled with the `d` key during gameplay. The overlay displays recent log messages with timestamps and log levels, making it easier to diagnose issues during gameplay without disrupting the main UI.
+The game includes an AI opponent with adjustable difficulty:
 
-### Running with Debug Logging to File
+- **Easy**: Makes simple moves, doesn't use multi-card attacks
+- **Medium**: Uses better strategy, occasionally attacks with 2 cards
+- **Hard**: Uses advanced strategy, aggressively attacks with multiple cards when possible, and makes smarter defense decisions
 
-You can also enable file-based debug logging by setting the `DURAK_DEBUG_FILE` environment variable:
+## Development
+
+To enable debug logging:
 
 ```bash
 DURAK_DEBUG_FILE=durak_debug.log cargo run
 ```
 
-This will create a log file with detailed information about the game's behavior.
+## Recent Fixes
 
-### Log Levels
+- Fixed cursor visibility issue in multiselect mode
+- Added ability for AI to attack with multiple cards based on difficulty level
+- Improved AI defense logic to properly handle multiple attack cards
+- Fixed issue where game would get stuck when AI is defending against multiple cards:
+  - Added coordinated planning between defense simulation and execution
+  - Implemented defense plan tracking for consistent decision making
+  - Enhanced AI to maintain a consistent strategy across all defenses
+  - Fixed edge case handling for partially defended attacks
+  - Improved AI decision-making for when to take cards vs. attempt defense
 
-The log messages are color-coded by level:
+## License
 
-- ERROR (Red) - Critical issues that prevent proper game function
-- WARN (Yellow) - Problems that might affect gameplay but don't prevent execution
-- INFO (Green) - Important game state changes and player actions
-- DEBUG (Blue) - Detailed information about game flow
-- TRACE (Gray) - Very detailed information for step-by-step debugging
-
-## Common Issues and Solutions
-
-1. **Stack Overflow**: If the game crashes with a stack overflow, this might be due to an infinite recursion in AI processing. Try running with LOG_TO_FILE=1 to capture the state before the crash.
-
-2. **Invalid Card Plays**: The logs will show detailed information about why a card play might be rejected, helping identify issues with game rules implementation.
-
-3. **Game State Errors**: All transitions between game phases are logged, making it easier to identify when the game gets into an invalid state.
-
-Report any issues with the log file attached for faster resolution.
-
-## Development
-
-### Building from Source
-
-```bash
-cargo build --release
-```
-
-### Running Tests
-
-```bash
-cargo test
-```
+MIT

@@ -1,10 +1,11 @@
+pub mod ai;
 pub mod card;
 pub mod deck;
-pub mod player;
 pub mod game_state;
-pub mod ai;
+pub mod player;
 
-pub use card::{Card, Suit};
+pub use ai::AiDifficulty;
+pub use ai::AiPlayer;
+pub use card::Card;
+pub use game_state::{GamePhase, GameState};
 pub use player::PlayerType;
-pub use game_state::{GameState, GamePhase};
-pub use ai::{AiPlayer, AiDifficulty}; 

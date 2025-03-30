@@ -1,12 +1,12 @@
+use lazy_static::lazy_static;
 use log::Level;
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
     style::{Color, Modifier, Style},
-    widgets::{Block, Borders, Paragraph, Widget},
     text::{Line, Span},
+    widgets::{Block, Borders, Paragraph, Widget},
 };
-use lazy_static::lazy_static;
 use std::sync::Mutex;
 
 // Buffer to hold our UI log messages
@@ -72,13 +72,13 @@ fn log_message(message: &str, level: LogLevel) {
     // Create timestamp
     let now = chrono::Local::now();
     let timestamp = now.format("%H:%M:%S%.3f").to_string();
-    
+
     if let Ok(mut buffer) = UI_LOG_BUFFER.lock() {
         // Keep only the last 100 messages to avoid memory issues
         if buffer.len() >= 100 {
             buffer.remove(0);
         }
-        
+
         // Convert LogLevel to log::Level for storage
         let log_level = match level {
             LogLevel::Error => Level::Error,
@@ -87,7 +87,7 @@ fn log_message(message: &str, level: LogLevel) {
             LogLevel::Debug => Level::Debug,
             LogLevel::Trace => Level::Trace,
         };
-        
+
         buffer.push((timestamp, message.to_string(), log_level));
     }
 }
@@ -135,7 +135,7 @@ impl Widget for DebugOverlay {
 
         // Get inner area before rendering the block
         let inner_area = debug_block.inner(log_area);
-            
+
         // Render the block background
         debug_block.render(log_area, buf);
 
@@ -148,15 +148,20 @@ impl Widget for DebugOverlay {
 
         // Create text for log messages
         let mut text = Vec::new();
-        for (timestamp, message, level) in messages.into_iter().rev().take(inner_area.height as usize) {
+        for (timestamp, message, level) in
+            messages.into_iter().rev().take(inner_area.height as usize)
+        {
             let log_level = LogLevel::from(level);
-            let level_str = format!("[{}]", match log_level {
-                LogLevel::Error => "ERROR",
-                LogLevel::Warn => "WARN ",
-                LogLevel::Info => "INFO ",
-                LogLevel::Debug => "DEBUG",
-                LogLevel::Trace => "TRACE",
-            });
+            let level_str = format!(
+                "[{}]",
+                match log_level {
+                    LogLevel::Error => "ERROR",
+                    LogLevel::Warn => "WARN ",
+                    LogLevel::Info => "INFO ",
+                    LogLevel::Debug => "DEBUG",
+                    LogLevel::Trace => "TRACE",
+                }
+            );
 
             let line = Line::from(vec![
                 Span::styled(
@@ -173,9 +178,9 @@ impl Widget for DebugOverlay {
         }
 
         // Create the paragraph and render it within the block's inner area
-        let paragraph = Paragraph::new(text)
-            .style(Style::default().bg(Color::Black).fg(Color::White));
+        let paragraph =
+            Paragraph::new(text).style(Style::default().bg(Color::Black).fg(Color::White));
 
         paragraph.render(inner_area, buf);
     }
-} 
+}
