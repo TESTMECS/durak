@@ -1,7 +1,9 @@
 use super::card::{Card, Suit};
 use super::deck::Deck;
 use super::player::{Player, PlayerType};
+use crate::ui::debug_overlay::debug;
 use std::collections::VecDeque;
+use std::fmt::Display;
 
 // Counter to detect when the drawing phase might be stuck
 static mut STUCK_COUNTER: usize = 0;
@@ -13,6 +15,11 @@ pub enum GamePhase {
     Defense,
     Drawing,
     GameOver,
+}
+impl Display for GamePhase {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -30,7 +37,6 @@ pub struct GameState {
 
 impl GameState {
     pub fn new() -> Self {
-        // debug!("Creating new GameState");
         Self {
             players: Vec::new(),
             deck: Deck::new(),
@@ -45,47 +51,36 @@ impl GameState {
     }
 
     pub fn add_player(&mut self, name: String, player_type: PlayerType) {
-        // debug!("Adding player: {} (type: {:?})", name, player_type);
         self.players.push(Player::new(name, player_type));
     }
 
     pub fn setup_game(&mut self) {
-        //info!("Setting up new game with {} players", self.players.len());
         assert!(
             self.players.len() >= 2,
             "Need at least 2 players to start the game"
         );
-
         // Initialize and shuffle the deck
         self.deck = Deck::new();
         self.deck.shuffle();
         self.trump_suit = self.deck.trump_suit();
-        //info!("Deck shuffled, trump suit: {:?}", self.trump_suit);
-
         // Deal cards to players (6 cards each)
         for player in &mut self.players {
             let cards = self.deck.deal(6);
-            // debug!("Dealing 6 cards to {}", player.name());
             player.add_cards(cards);
         }
-
         // Determine who goes first (player with lowest trump card)
         self.determine_first_player();
         self.current_defender = (self.current_attacker + 1) % self.players.len();
-
         self.game_phase = GamePhase::Attack;
     }
 
     fn determine_first_player(&mut self) {
-        // debug!("Determining first player");
         if let Some(trump_suit) = self.trump_suit {
             // Find the player with the lowest trump card
             let mut lowest_player = 0;
             let mut lowest_rank = None;
-
             for (i, player) in self.players.iter().enumerate() {
                 if let Some((_, card)) = player.get_lowest_trump(trump_suit) {
-                    // debug!("Player {} has trump card: {:?}", i, card);
                     if lowest_rank.is_none() || card.rank < lowest_rank.unwrap() {
                         lowest_rank = Some(card.rank);
                         lowest_player = i;
@@ -95,69 +90,66 @@ impl GameState {
             // If someone has a trump card, they go first
             if lowest_rank.is_some() {
                 self.current_attacker = lowest_player;
-                // debug!("First player is {} with lowest trump", lowest_player);
                 return;
             }
         }
         // If no one has a trump card or there's no trump suit, just start with player 0
-        // debug!("No one has trump cards, starting with player 0");
         self.current_attacker = 0;
     }
 
-    pub fn attack(&mut self, card_idx: usize) -> Result<(), &'static str> {
+    pub fn attack(&mut self, card_idx: usize, is_multi: bool) -> Result<(), &'static str> {
         if self.game_phase != GamePhase::Attack {
-            //warn!("Attack attempt outside attack phase: {:?}", self.game_phase);
             return Err("Not in attack phase");
         }
-
+        // is this wrong?
         let attacker = &mut self.players[self.current_attacker];
-        // debug!(
-        //     "Player {} attempting to attack with card index {}",
-        //     self.current_attacker, card_idx
-        // );
-
-        // Check if the card can be played
+        if card_idx >= attacker.hand_size() {
+            return Err("Invalid card index");
+        }
+        // If attacking?
         if self.table_cards.is_empty() {
-            // First attack - any card is valid
+            // remove card from attacker
             if let Some(card) = attacker.remove_card(card_idx) {
-                //info!(
-                //"First attack: Player {} played {}",
-                //self.current_attacker, card
-                //);
+                // push it onto the table
                 self.table_cards.push((card, None));
-                self.game_phase = GamePhase::Defense;
-                return Ok(());
-            }
-        } else {
-            // Additional attacks - must match a rank on the table
-            let card = match attacker.hand().get(card_idx) {
-                Some(c) => *c,
-                None => {
-                    return Err("Invalid card index");
+                // change the game state.
+                if !is_multi {
+                    self.game_phase = GamePhase::Defense;
                 }
-            };
-
-            // Check if the rank is already on the table
-            let is_valid = self.table_cards.iter().any(|(attack, defense)| {
-                attack.rank == card.rank || defense.map_or(false, |d| d.rank == card.rank)
-            });
-
-            if is_valid {
-                let card = attacker.remove_card(card_idx).unwrap();
-                //info!(
-                //"Additional attack: Player {} played {}",
-                //self.current_attacker, card
-                //);
-                self.table_cards.push((card, None));
-                self.game_phase = GamePhase::Defense;
                 return Ok(());
-            } else {
-                //warn!("Invalid attack card: rank doesn't match any card on the table");
-                return Err("Card rank does not match any card on the table");
             }
         }
-
-        //warn!("Invalid card index {} for attack", card_idx);
+        //else {
+        // I feel like this should be an error. When would the game be in attack state with
+        // cards on the table?
+        //debug("Touching weird spot");
+        //let card = match attacker.hand().get(card_idx) {
+        //    Some(c) => *c,
+        //    None => {
+        //        return Err("Invalid card index");
+        //    }
+        //};
+        //// Check if the rank is already on the table
+        //let table_ranks: Vec<_> = self
+        //    .table_cards
+        //    .iter()
+        //    .flat_map(|(attack, defense)| {
+        //        let mut ranks = vec![attack.rank];
+        //        if let Some(def) = defense {
+        //            ranks.push(def.rank);
+        //        }
+        //        ranks
+        //    })
+        //    .collect();
+        //let is_valid = table_ranks.contains(&card.rank);
+        //if is_valid {
+        //    let card = attacker.remove_card(card_idx).unwrap();
+        //    self.table_cards.push((card, None));
+        //    self.game_phase = GamePhase::Defense;
+        //    return Ok(());
+        //} else {
+        //    return Err("Card rank does not match any card on the table");
+        //}
         Err("Invalid card index")
     }
 
@@ -165,27 +157,13 @@ impl GameState {
         if self.game_phase != GamePhase::Defense {
             return Err("Not in defense phase");
         }
-
         let defender = &mut self.players[self.current_defender];
-        // debug!(
-        //     "Player {} attempting to defend with card index {}",
-        //     self.current_defender, card_idx
-        // );
-
         if defender.hand_size() == 0 {
-            //warn!("Defender has no cards to defend with");
             return Err("No cards to defend with");
         }
-
         if card_idx >= defender.hand_size() {
-            //warn!(
-            //"Invalid card index {} for defender with {} cards",
-            //card_idx,
-            //defender.hand_size()
-            //);
             return Err("Invalid card index");
         }
-
         // Find the last undefended attack
         let attack_idx = match self
             .table_cards
@@ -194,37 +172,49 @@ impl GameState {
         {
             Some(idx) => idx,
             None => {
-                //warn!("No undefended attacks found to defend against");
+                debug("No undefended attacks found to defend against");
                 return Err("No attacks to defend against");
             }
         };
 
         let attacking_card = self.table_cards[attack_idx].0;
-        // debug!(
-        //     "Defending against attacking card {} at table position {}",
-        //     attacking_card, attack_idx
-        // );
-
+        debug(format!(
+            "Defending against attacking card {} at table position {}",
+            attacking_card, attack_idx
+        ));
         let card = match defender.hand().get(card_idx) {
             Some(c) => *c,
             None => {
+                debug(format!(
+                    "Invalid card index: {} (hand size: {})",
+                    card_idx,
+                    defender.hand_size()
+                ));
                 return Err("Invalid card index");
             }
         };
 
-        // debug!(
-        //     "Attempting to defend with card {} against {}",
-        //     card, attacking_card
-        // );
+        debug(format!(
+            "Attempting to defend with card {} against {}",
+            card, attacking_card
+        ));
 
         // Check if the defending card can beat the attacking card
         if let Some(trump_suit) = self.trump_suit {
-            if card.can_beat(&attacking_card, trump_suit) {
+            debug(format!("Trump suit: {:?}", trump_suit));
+            let can_beat = card.can_beat(&attacking_card, trump_suit);
+            debug(format!(
+                "Can {} beat {}: {}",
+                card, attacking_card, can_beat
+            ));
+
+            if can_beat {
                 let card = defender.remove_card(card_idx).unwrap();
-                //info!(
-                //    "Defense: Player {} used {} to beat {}",
-                //    self.current_defender, card, attacking_card
-                //);
+                debug(format!(
+                    "Defense: Player {} used {} to beat {}",
+                    self.current_defender, card, attacking_card
+                ));
+
                 self.table_cards[attack_idx].1 = Some(card);
 
                 // Check if all attacks are defended
@@ -233,24 +223,18 @@ impl GameState {
                     .iter()
                     .any(|(_, defense)| defense.is_none());
 
+                debug(format!("All attacks defended: {}", all_defended));
                 if all_defended {
-                    // debug!("All attacks defended");
-                    //debug!("All attacks defended");
-
                     // Move defended cards to discard pile
-                    let card_count = self.table_cards.len();
-                    // debug!("Moving {} defended card pairs to discard pile", card_count);
+                    let _card_count = self.table_cards.len();
                     let cards_to_discard: Vec<Card> = self
                         .table_cards
                         .drain(..)
                         .flat_map(|(a, d)| vec![a, d.unwrap()])
                         .collect();
                     self.discard_pile.extend(cards_to_discard.iter());
-                    // debug!("Discarding cards: {:?}", cards_to_discard);
-                    // debug!("Discard pile now has {} cards", self.discard_pile.len());
 
                     // Clear table
-                    // debug!("Table cleared after successful defense");
                     self.table_cards.clear();
 
                     // Immediately make the defender the new attacker after successful defense
@@ -261,92 +245,92 @@ impl GameState {
                     self.current_attacker = prev_defender;
                     self.current_defender = (self.current_attacker + 1) % self.players.len();
 
-                    //info!("After successful defense: player {} becomes attacker, player {} becomes defender",
-                    //self.current_attacker, self.current_defender);
-
                     // Check if we need to draw cards before changing phase
                     let need_to_draw = (self.players[prev_attacker].hand_size() < 6
                         || self.players[prev_defender].hand_size() < 6)
                         && !self.deck.is_empty();
 
                     if need_to_draw {
-                        //info!("Moving to drawing phase after successful defense");
                         self.game_phase = GamePhase::Drawing;
                     } else {
                         // Skip drawing phase, go directly to attack
-                        //info!("Moving directly to attack phase with new attacker - no cards need to be drawn");
                         self.game_phase = GamePhase::Attack;
                     }
 
                     // Check for empty hands/game over condition
                     self.check_game_over();
-                } else {
-                    // debug!("More undefended attacks remain");
-                    //debug!("More undefended attacks remain");
                 }
-
                 return Ok(());
             } else {
-                //warn!(
-                //"Card {} cannot beat attacking card {}",
-                //card, attacking_card
-                //);
                 return Err("Card cannot beat the attacking card");
             }
         }
-
-        //warn!("No trump suit defined");
         Err("No trump suit defined")
     }
 
     pub fn take_cards(&mut self) -> Result<(), &'static str> {
         if self.game_phase != GamePhase::Defense {
-            //warn!(
-            //"Take cards attempt outside defense phase: {:?}",
-            //self.game_phase
-            //);
+            debug(format!(
+                "Take cards attempt outside defense phase: {:?}",
+                self.game_phase
+            ));
             return Err("Not in defense phase");
         }
 
+        debug(format!(
+            "Player {} attempting to take cards",
+            self.current_defender
+        ));
+        debug(format!("Current table cards: {:?}", self.table_cards));
+
         if self.table_cards.is_empty() {
-            //warn!("No cards on table to take");
+            debug("No cards on table to take");
             return Err("No cards on table to take");
         }
 
         let defender = &mut self.players[self.current_defender];
+        let defender_hand_size_before = defender.hand_size();
+        debug(format!(
+            "Defender hand size before taking: {}",
+            defender_hand_size_before
+        ));
+
         let table_cards = std::mem::take(&mut self.table_cards);
-        let _card_count = table_cards.len();
-        //info!(
-        //"Player {} taking {} cards from table",
-        //self.current_defender, card_count
-        //);
+        let card_count = table_cards.len();
+        debug(format!(
+            "Player {} taking {} card pairs from table",
+            self.current_defender, card_count
+        ));
 
         // Collect all cards from the table
         let mut cards_to_take = Vec::new();
         for (attack, defense) in table_cards {
+            debug(format!("Taking attack card: {}", attack));
             cards_to_take.push(attack);
             if let Some(card) = defense {
+                debug(format!("Taking defense card: {}", card));
                 cards_to_take.push(card);
             }
         }
 
-        // debug!("Total cards taken: {}", cards_to_take.len());
-        // debug!("Cards being taken: {:?}", cards_to_take);
+        debug(format!("Total cards taken: {}", cards_to_take.len()));
+        debug(format!("Cards being taken: {:?}", cards_to_take));
         defender.add_cards(cards_to_take);
+
+        debug(format!(
+            "Defender hand size after taking: {}",
+            defender.hand_size()
+        ));
 
         // Move to drawing phase
         self.game_phase = GamePhase::Drawing;
-        // debug!("Game phase changed to Drawing after taking cards");
+        debug("Game phase changed to Drawing after taking cards");
 
         Ok(())
     }
 
     pub fn draw_cards(&mut self) {
         if self.game_phase != GamePhase::Drawing {
-            // debug!(
-            //     "Called draw_cards but not in Drawing phase (current phase: {:?})",
-            //     self.game_phase
-            // );
             return;
         }
 
@@ -354,19 +338,12 @@ impl GameState {
         unsafe {
             STUCK_COUNTER += 1;
             if STUCK_COUNTER > 5 {
-                //warn!("Drawing phase appears stuck! Counter: {}", STUCK_COUNTER);
-                //warn!("Emergency action: Forcing transition to Attack phase");
-
                 // Reset game phase and counter
                 self.game_phase = GamePhase::Attack;
                 STUCK_COUNTER = 0;
 
                 // Clear the table if needed
                 if !self.table_cards.is_empty() {
-                    //warn!(
-                    //"Clearing {} cards from table due to stuck state",
-                    //self.table_cards.len() * 2
-                    //);
                     self.discard_pile
                         .extend(self.table_cards.drain(..).flat_map(|(a, d)| {
                             let mut cards = vec![a];
@@ -377,13 +354,8 @@ impl GameState {
                         }));
                 }
 
-                //debug!(
-                //"Game state reset to Attack phase with Attacker: {}, Defender: {}",
-                //self.current_attacker, self.current_defender
-                //);
                 return;
             }
-            // debug!("Draw cards called, stuck counter: {}", STUCK_COUNTER);
         }
 
         // Early return if there are no players who need cards
@@ -392,7 +364,6 @@ impl GameState {
             .iter()
             .any(|p| p.hand_size() < 6 && !self.deck.is_empty());
         if !players_need_cards {
-            // debug!("No players need cards and/or deck is empty, skipping drawing phase");
             self.game_phase = GamePhase::Attack;
             unsafe {
                 STUCK_COUNTER = 0;
@@ -400,15 +371,10 @@ impl GameState {
             return;
         }
 
-        // debug!("Drawing cards for players who have less than 6 cards");
         let mut cards_drawn = false;
 
         // Drawing logic - first attacker draws, then defender, then others
         if !self.deck.is_empty() {
-            // debug!(
-            //     "Deck has {} cards remaining, drawing cards",
-            //     self.deck.remaining()
-            // );
             let player_count = self.players.len();
             let mut drawing_order = VecDeque::new();
 
@@ -420,79 +386,41 @@ impl GameState {
             }
 
             // Draw cards to bring each hand back to 6
-            // trace!("Drawing order: {:?}", drawing_order);
 
             while let Some(player_idx) = drawing_order.pop_front() {
                 let player = &mut self.players[player_idx];
                 let cards_needed = 6usize.saturating_sub(player.hand_size());
 
                 if cards_needed > 0 && !self.deck.is_empty() {
-                    // debug!(
-                    //     "Player {} drawing {} cards to replenish hand",
-                    //     player_idx, cards_needed
-                    // );
                     let new_cards = self.deck.deal(cards_needed);
                     if !new_cards.is_empty() {
                         cards_drawn = true;
                     }
-                    // debug!("Player {} drew cards: {:?}", player_idx, new_cards);
                     player.add_cards(new_cards);
-                } else if cards_needed > 0 {
-                    // debug!(
-                    //     "Player {} needs {} cards but deck is empty",
-                    //     player_idx, cards_needed
-                    // );
-                } else {
-                    // debug!("Player {} already has full hand", player_idx);
                 }
-            }
-
-            // If no cards were drawn at all, log it
-            if !cards_drawn {
-                //info!("No cards were drawn by any player");
             }
 
             // Check if any player has run out of cards and the game is over
             self.check_game_over();
-            // debug!("After drawing, checking game phase: {:?}", self.game_phase);
 
             if self.game_phase != GamePhase::GameOver {
                 // Only change attacker/defender if the table is NOT empty
                 // If table is empty, the defender already became the attacker in the defend method
                 if !self.table_cards.is_empty() {
-                    let prev_attacker = self.current_attacker;
-                    let prev_defender = self.current_defender;
+                    let _prev_attacker = self.current_attacker;
+                    let _prev_defender = self.current_defender;
 
                     // If the defender took cards, they're skipped
-                    //info!("Defender took cards, is skipped for next attack");
                     self.current_attacker = (self.current_defender + 1) % self.players.len();
                     self.current_defender = (self.current_attacker + 1) % self.players.len();
-
-                    // debug!(
-                    //     "After player rotation, current attacker: {}, current defender: {}",
-                    //     self.current_attacker, self.current_defender
-                    // );
-                    //info!(
-                    //"Next round: attacker {} (was {}), defender {} (was {})",
-                    //self.current_attacker, prev_attacker, self.current_defender, prev_defender
-                    //);
-                } else {
-                    // debug!("Table already empty, keeping the current attacker/defender roles");
                 }
-
                 // Set the game phase back to Attack
-                // debug!("Changing game phase from Drawing to Attack");
                 self.game_phase = GamePhase::Attack;
-            } else {
-                // debug!("Game over detected during draw phase");
             }
         } else {
-            // debug!("Deck is empty, skipping drawing phase");
             // Check for game over condition
             self.check_game_over();
-
             if self.game_phase != GamePhase::GameOver {
-                // debug!("Changing phase to Attack since deck is empty");
                 self.game_phase = GamePhase::Attack;
             }
         }
@@ -502,7 +430,6 @@ impl GameState {
             unsafe {
                 STUCK_COUNTER = 0;
             }
-            // debug!("Reset stuck counter - phase is now {:?}", self.game_phase);
         }
     }
 
@@ -510,7 +437,6 @@ impl GameState {
     // Does NOT change the game phase internally.
     pub fn check_game_over(&self) -> bool {
         if self.deck.is_empty() {
-            // debug!("Deck is empty, checking for game over condition");
             let mut players_with_cards = 0;
             for player in self.players.iter() {
                 if !player.is_empty_hand() {
@@ -520,7 +446,6 @@ impl GameState {
 
             // Game ends when only one player (or zero) has cards left
             if players_with_cards <= 1 {
-                // debug!("Game over condition met: {} players with cards", players_with_cards);
                 return true;
             }
 
@@ -608,13 +533,9 @@ impl GameState {
     }
 
     // Set the winner and update game phase
+    #[allow(dead_code)]
     pub fn set_winner(&mut self, player_idx: usize) {
         if player_idx < self.players.len() {
-            //info!(
-            //    "Setting player {} ({}) as the winner",
-            //    player_idx,
-            //    self.players[player_idx].name()
-            //);
             self.winner = Some(player_idx);
             self.game_phase = GamePhase::GameOver;
         } else {

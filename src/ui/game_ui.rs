@@ -1,4 +1,5 @@
 use crate::game::{GamePhase, GameState};
+use crate::ui::debug_overlay::{debug, info, trace};
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
@@ -143,19 +144,11 @@ impl<'a> GameUI<'a> {
 
     fn render_help(&self, area: Rect, buf: &mut Buffer) {
         let current_phase = self.game_state.game_phase();
-        let multiple_mode = if let Some(ref selected) = self.multiple_selected {
-            if !selected.is_empty() {
-                format!(" | {} cards selected", selected.len())
-            } else {
-                " | Multiple selection mode".to_string()
-            }
-        } else {
-            "".to_string()
-        };
         let help_text = match current_phase {
-            GamePhase::Attack => format!("←/→: Select card | M: Multi-select mode | Space: Toggle selection | Enter: Play card(s) | P: Pass{}", multiple_mode),
-            GamePhase::Defense => format!("←/→: Select card | M: Multi-select mode | Space: Toggle selection | Enter: Play card | T: Take cards{}", multiple_mode),
+            GamePhase::Attack => format!("←/→: Select card | M: Multi-select mode | Space: Toggle selection | Enter: Play card(s) | P: Pass | q: Quit"),
+            GamePhase::Defense => format!("←/→: Select card | M: Multi-select mode | Space: Toggle selection | Enter: Play card | T: Take cards | q: Quit"),
             GamePhase::GameOver => "Q: Quit | N: New game".to_string(),
+            GamePhase::Drawing => "Press any key to continue".to_string(),
             _ => "".to_string(),
         };
         let para = Paragraph::new(help_text)

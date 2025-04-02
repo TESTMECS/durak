@@ -136,6 +136,9 @@ DURAK_DEBUG_FILE=durak_debug.log cargo run
   - Fixed edge case handling for partially defended attacks
   - Improved AI decision-making for when to take cards vs. attempt defense
 
+## Refactoring.
+- Logic will undergo refactoring
+
 ## License
 
 MIT

@@ -26,7 +26,11 @@ pub enum AppAction {
     AcknowledgeDraw, // Any key during drawing
 }
 
-pub fn handle_key_input(app_state: &AppState, game_phase: &GamePhase, key: KeyCode) -> Option<AppAction> {
+pub fn handle_key_input(
+    app_state: &AppState,
+    game_phase: &GamePhase,
+    key: KeyCode,
+) -> Option<AppAction> {
     // Handle global keys first
     match key {
         KeyCode::Char('q') | KeyCode::Char('Q') => return Some(AppAction::Quit),
@@ -50,21 +54,25 @@ pub fn handle_key_input(app_state: &AppState, game_phase: &GamePhase, key: KeyCo
                     // Any key press acknowledges the draw phase
                     Some(AppAction::AcknowledgeDraw)
                 }
-                GamePhase::Attack | GamePhase::Defense => {
-                    match key {
-                        KeyCode::Up | KeyCode::Left => Some(AppAction::SelectPrevCard),
-                        KeyCode::Down | KeyCode::Right => Some(AppAction::SelectNextCard),
-                        KeyCode::Char('m') | KeyCode::Char('M') => Some(AppAction::ToggleMultiSelect),
-                        KeyCode::Char(' ') => Some(AppAction::ToggleCardSelection),
-                        KeyCode::Enter => Some(AppAction::PlaySelectedCard),
-                        KeyCode::Char('p') | KeyCode::Char('P') if *game_phase == GamePhase::Attack => Some(AppAction::PassTurn),
-                        KeyCode::Char('t') | KeyCode::Char('T') if *game_phase == GamePhase::Defense => Some(AppAction::TakeCards),
-                        _ => None,
+                GamePhase::Attack | GamePhase::Defense => match key {
+                    KeyCode::Up | KeyCode::Left => Some(AppAction::SelectPrevCard),
+                    KeyCode::Down | KeyCode::Right => Some(AppAction::SelectNextCard),
+                    KeyCode::Char('m') | KeyCode::Char('M') => Some(AppAction::ToggleMultiSelect),
+                    KeyCode::Char(' ') => Some(AppAction::ToggleCardSelection),
+                    KeyCode::Enter => Some(AppAction::PlaySelectedCard),
+                    KeyCode::Char('p') | KeyCode::Char('P') if *game_phase == GamePhase::Attack => {
+                        Some(AppAction::PassTurn)
                     }
-                }
+                    KeyCode::Char('t') | KeyCode::Char('T')
+                        if *game_phase == GamePhase::Defense =>
+                    {
+                        Some(AppAction::TakeCards)
+                    }
+                    _ => None,
+                },
                 GamePhase::GameOver => match key {
                     KeyCode::Char('n') | KeyCode::Char('N') => Some(AppAction::StartNewGame),
-                     _ => None,
+                    _ => None,
                 },
                 _ => None, // Setup phase has no input
             }
@@ -74,4 +82,5 @@ pub fn handle_key_input(app_state: &AppState, game_phase: &GamePhase, key: KeyCo
             _ => None,
         },
     }
-} 
+}
+

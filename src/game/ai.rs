@@ -1,17 +1,25 @@
-use crate::game::{Card, GameState};
-use log::debug;
-use rand::{thread_rng, Rng};
-use std::collections::{HashMap, HashSet};
 use crate::game::card::Rank;
 use crate::game::card::Suit;
+use crate::game::{Card, GameState};
+use crate::ui::debug_overlay::debug;
+use rand::{thread_rng, Rng};
+use std::collections::{HashMap, HashSet};
+use std::fmt::Display;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AiDifficulty {
-    #[allow(dead_code)]
     Easy,
     Medium,
-    #[allow(dead_code)]
     Hard,
+}
+impl Display for AiDifficulty {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AiDifficulty::Easy => write!(f, "Easy"),
+            AiDifficulty::Medium => write!(f, "Medium"),
+            AiDifficulty::Hard => write!(f, "Hard"),
+        }
+    }
 }
 
 // Define a strategy trait for AI behavior
@@ -51,18 +59,17 @@ impl AiStrategy for EasyStrategy {
                     false // Should have trump in defense phase
                 }
             });
-
             if !can_defend_easily {
-                // debug!(
-                //     "Easy AI ({}) finds defense difficult or impossible, taking cards",
-                //     player_idx
-                // );
+                debug(format!(
+                    "Easy AI ({}) cannot defend against {}, taking cards",
+                    player_idx, attacking_card
+                ));
                 true
             } else {
-                // debug!(
-                //     "Easy AI ({}) finds defense possible, will attempt",
-                //     player_idx
-                // );
+                debug(format!(
+                    "Easy AI ({}) can defend against {}, not taking cards",
+                    player_idx, attacking_card
+                ));
                 false
             }
         } else {
@@ -105,11 +112,11 @@ impl AiStrategy for EasyStrategy {
 
     fn make_defense_move(&self, game_state: &GameState, player_idx: usize) -> Option<usize> {
         let player = &game_state.players()[player_idx];
+        // Getting the full player's hand?
         let hand = player.hand();
         let trump_suit = game_state
             .trump_suit()
             .expect("Trump suit must be set during defense");
-
         // Find the first undefended attack
         if let Some((attacking_card, _)) = game_state
             .table_cards()
@@ -141,12 +148,10 @@ impl AiStrategy for MediumStrategy {
     fn difficulty(&self) -> AiDifficulty {
         AiDifficulty::Medium
     }
-
     fn should_take_cards(&self, game_state: &GameState, player_idx: usize) -> bool {
         // debug!("Medium AI ({}) deciding whether to take cards", player_idx);
         let player = &game_state.players()[player_idx];
         let trump_suit = game_state.trump_suit();
-
         // Find the first undefended attack
         if let Some((attacking_card, _)) = game_state
             .table_cards()
@@ -154,9 +159,10 @@ impl AiStrategy for MediumStrategy {
             .find(|(_, defense)| defense.is_none())
         {
             // Check if the player *can* defend
-            let can_defend = player.hand().iter().any(|card| {
-                trump_suit.is_some_and(|trump| card.can_beat(attacking_card, trump))
-            });
+            let can_defend = player
+                .hand()
+                .iter()
+                .any(|card| trump_suit.is_some_and(|trump| card.can_beat(attacking_card, trump)));
 
             if !can_defend {
                 // debug!(
@@ -254,10 +260,10 @@ impl AiStrategy for MediumStrategy {
                     .into_iter()
                     .min_by_key(|(_, card)| card.rank)
                     .unwrap(); // Safe unwrap because valid_attacks is not empty
-                // debug!(
-                //     "Medium AI ({}) adding attack with lowest matching rank: {}",
-                //     player_idx, best_card
-                // );
+                               // debug!(
+                               //     "Medium AI ({}) adding attack with lowest matching rank: {}",
+                               //     player_idx, best_card
+                               // );
                 Some(best_idx)
             }
         }
@@ -358,7 +364,10 @@ impl AiStrategy for HardStrategy {
         // Evaluate the cost of defending vs. taking
         let mut potential_defenses: Vec<Vec<(usize, Card)>> = Vec::new();
         for attack_card in &undefended_attacks {
-            let defenses = player.hand().iter().enumerate()
+            let defenses = player
+                .hand()
+                .iter()
+                .enumerate()
                 .filter(|(_, card)| card.can_beat(attack_card, trump_suit))
                 .map(|(idx, &card)| (idx, card))
                 .collect::<Vec<_>>();
@@ -569,22 +578,83 @@ impl AiPlayer {
         game_state: &GameState,
         player_idx: usize,
     ) -> Option<usize> {
-        self.strategy.make_defense_move(game_state, player_idx)
+        debug("AI selecting defense card");
+
+        // Find the specific attack that needs defending
+        if let Some((attack_card, _)) = game_state
+            .table_cards()
+            .iter()
+            .find(|(_, defense)| defense.is_none())
+        {
+            debug(format!("AI needs to defend against: {:?}", attack_card));
+
+            // Log available cards that could defend
+            let hand = game_state.players()[player_idx].hand();
+            let trump_suit = game_state.trump_suit().unwrap_or_else(|| {
+                debug("WARNING: No trump suit defined during defense phase");
+                attack_card.suit // Fallback, shouldn't happen
+            });
+
+            let valid_defenses: Vec<(usize, &crate::game::Card)> = hand
+                .iter()
+                .enumerate()
+                .filter(|(_, card)| card.can_beat(attack_card, trump_suit))
+                .collect();
+
+            debug(format!(
+                "AI has {} valid defense options",
+                valid_defenses.len()
+            ));
+            for (idx, card) in &valid_defenses {
+                debug(format!("  Defense option: index={}, card={:?}", idx, card));
+            }
+        }
+
+        let defense_move = self.strategy.make_defense_move(game_state, player_idx);
+
+        match defense_move {
+            Some(idx) => debug(format!("AI chose defense card at index {}", idx)),
+            None => debug("AI couldn't find a suitable defense card"),
+        }
+
+        defense_move
     }
 
     pub fn should_take_cards(&mut self, game_state: &GameState, player_idx: usize) -> bool {
-        self.strategy.should_take_cards(game_state, player_idx)
+        debug(format!("AI evaluating whether to take cards"));
+
+        // Count undefended attacks for logging
+        let undefended_attacks = game_state
+            .table_cards()
+            .iter()
+            .filter(|(_, defense)| defense.is_none())
+            .count();
+        debug(format!(
+            "AI facing {} undefended attacks",
+            undefended_attacks
+        ));
+
+        // Log AI hand
+        let hand = game_state.players()[player_idx].hand();
+        debug(format!("AI hand: {:?}", hand));
+
+        let decision = self.strategy.should_take_cards(game_state, player_idx);
+        debug(format!(
+            "AI decision: {}",
+            if decision { "TAKE cards" } else { "DEFEND" }
+        ));
+
+        decision
     }
 
     pub fn make_multi_attack_move(&self, game_state: &GameState, player_idx: usize) -> Vec<usize> {
         // This function determines if AI should attack with multiple cards of the same rank
-        // debug!("AI considering multi-card attack for player {}", player_idx);
+        // This function is the main entry point for the AI attacking.
         let player = &game_state.players()[player_idx];
         let hand = player.hand();
         let defender = &game_state.players()[game_state.current_defender()];
         let defender_hand_size = defender.hand_size();
 
-        // No multi-attack if defender has no cards or we have no cards
         if defender_hand_size == 0 || hand.is_empty() {
             return Vec::new();
         }
@@ -644,11 +714,6 @@ impl AiPlayer {
                 return vec![first_attack];
             }
         }
-
-        // debug!(
-        //     "AI selected {} cards for multi-attack",
-        //     same_rank_cards.len()
-        // );
         same_rank_cards
     }
 }
