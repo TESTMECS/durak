@@ -86,6 +86,7 @@ impl Player {
             .min_by_key(|(_, card)| card.rank)
             .map(|(idx, &card)| (idx, card))
     }
+
     #[allow(dead_code)]
     pub fn get_valid_defenses(
         &self,
@@ -111,5 +112,9 @@ impl Player {
             .enumerate()
             .min_by_key(|(_, card)| (card.rank as usize, card.suit as usize))
             .map(|(idx, &card)| (idx, card))
+    }
+
+    pub fn handle_player_attack(&mut self, card_idx: usize) -> Option<Card> {
+        self.remove_card(card_idx)
     }
 }

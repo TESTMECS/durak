@@ -1,5 +1,5 @@
 use crate::game::{GamePhase, GameState};
-use crate::ui::debug_overlay::{debug, info, trace};
+// use crate::ui::debug_overlay::{debug, info, trace};
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
