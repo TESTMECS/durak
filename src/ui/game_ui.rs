@@ -122,7 +122,7 @@ impl<'a> GameUI<'a> {
         } else {
             // For computer players, just show card backs or count
             let card_count = format!("{} cards", player.hand_size());
-            let para = Paragraph::new(card_count).style(Style::default().fg(Color::DarkGray));
+            let para = Paragraph::new(card_count).style(Style::default().fg(Color::Red));
             para.render(inner_area, buf);
         }
     }
@@ -144,9 +144,10 @@ impl<'a> GameUI<'a> {
 
     fn render_help(&self, area: Rect, buf: &mut Buffer) {
         let current_phase = self.game_state.game_phase();
+        let multiple_selection = self.multiple_selected.is_some();
         let help_text = match current_phase {
-            GamePhase::Attack => format!("←/→: Select card | M: Multi-select mode | Space: Toggle selection | Enter: Play card(s) | P: Pass | q: Quit"),
-            GamePhase::Defense => format!("←/→: Select card | M: Multi-select mode | Space: Toggle selection | Enter: Play card (same rank = pass) | T: Take cards | q: Quit"),
+            GamePhase::Attack => format!("←/→: Select card | M: Multi-select mode {} | Space: Toggle selection | Enter: Play card(s) | P: Pass | q: Quit", if multiple_selection { "ON" } else { "OFF" }),
+            GamePhase::Defense => format!("←/→: Select card | M: Multi-select mode {} | Space: Toggle selection | Enter: Play card (same rank = pass) | T: Take cards | q: Quit", if multiple_selection { "ON" } else { "OFF" }),
             GamePhase::GameOver => "Q: Quit | N: New game".to_string(),
             GamePhase::Drawing => "Press any key to continue".to_string(),
             _ => "".to_string(),

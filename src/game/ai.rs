@@ -22,7 +22,6 @@ impl Display for AiDifficulty {
 
 // Define a strategy trait for AI behavior
 trait AiStrategy {
-    fn difficulty(&self) -> AiDifficulty;
 
     fn should_take_cards(&self, game_state: &GameState, player_idx: usize) -> bool;
 
@@ -38,10 +37,6 @@ trait AiStrategy {
         player_idx: usize,
     ) -> Option<Vec<(usize, Card)>>; //Always will return cards to attack with or an error.
 
-    fn make_multi_attack_move(&self, _game_state: &GameState, _player_idx: usize) -> Vec<usize> {
-        // Default implementation returns empty vec - no multi-attack by default
-        Vec::new()
-    }
 }
 
 // Implement strategies for each difficulty level
@@ -50,9 +45,6 @@ struct MediumStrategy;
 struct HardStrategy;
 
 impl AiStrategy for EasyStrategy {
-    fn difficulty(&self) -> AiDifficulty {
-        AiDifficulty::Easy
-    }
 
     fn should_take_cards(&self, game_state: &GameState, player_idx: usize) -> bool {
         // Easy AI follows the specific logic: if *any* single attacking card cannot be beaten,
@@ -207,12 +199,11 @@ impl AiStrategy for EasyStrategy {
         // Cannot defend - will need to take cards
         None
     }
+    
 }
 
 impl AiStrategy for MediumStrategy {
-    fn difficulty(&self) -> AiDifficulty {
-        AiDifficulty::Medium
-    }
+    
     
     fn should_take_cards(&self, game_state: &GameState, player_idx: usize) -> bool {
         // Medium AI evaluates all attacking cards before playing any defense
@@ -590,12 +581,10 @@ impl AiStrategy for MediumStrategy {
         // No undefended attacks
         return None;
     }
+    
 }
 
 impl AiStrategy for HardStrategy {
-    fn difficulty(&self) -> AiDifficulty {
-        AiDifficulty::Hard
-    }
 
     fn should_take_cards(&self, game_state: &GameState, player_idx: usize) -> bool {
         // Hard AI makes a strategic decision weighing multiple factors
@@ -1219,78 +1208,78 @@ impl AiStrategy for HardStrategy {
         None
     }
     
-    fn make_multi_attack_move(&self, game_state: &GameState, player_idx: usize) -> Vec<usize> {
-        // Hard AI will strategically select multiple cards of the same rank
-        let player = &game_state.players()[player_idx];
-        let hand = player.hand();
-        let trump_suit = game_state.trump_suit();
-        
-        if hand.is_empty() {
-            return Vec::new();
-        }
-        
-        // Group cards by rank
-        let mut rank_groups: HashMap<Rank, Vec<usize>> = HashMap::new();
-        for (idx, card) in hand.iter().enumerate() {
-            rank_groups.entry(card.rank).or_default().push(idx);
-        }
-        
-        // Find groups of 2 or more cards of the same rank
-        let mut valid_groups: Vec<(Rank, Vec<usize>)> = rank_groups
-            .into_iter()
-            .filter(|(_, indices)| indices.len() >= 2)
-            .collect();
-            
-        if valid_groups.is_empty() {
-            return Vec::new(); // No valid multi-attack possible
-        }
-        
-        // Sort groups by rank (lowest first)
-        valid_groups.sort_by_key(|(rank, _)| *rank);
-        
-        // Find the lowest rank group that contains at least one non-trump
-        for (_rank, indices) in &valid_groups {
-            let has_non_trump = indices
-                .iter()
-                .any(|&idx| trump_suit.map_or(true, |t| hand[idx].suit != t));
-                
-            if has_non_trump {
-                // Get the indices to use, but not more than defender can handle
-                let defender_idx = game_state.current_defender();
-                let defender_hand_size = game_state.players()[defender_idx].hand_size();
-                let max_cards = defender_hand_size.min(indices.len());
-                
-                // Prioritize non-trumps first
-                let mut selected_indices: Vec<usize> = indices
-                    .iter()
-                    .filter(|&&idx| trump_suit.map_or(true, |t| hand[idx].suit != t))
-                    .take(max_cards)
-                    .cloned()
-                    .collect();
-                    
-                // If we still need more cards, add trumps
-                if selected_indices.len() < max_cards {
-                    let trump_indices: Vec<usize> = indices
-                        .iter()
-                        .filter(|&&idx| trump_suit.map_or(false, |t| hand[idx].suit == t))
-                        .take(max_cards - selected_indices.len())
-                        .cloned()
-                        .collect();
-                        
-                    selected_indices.extend(trump_indices);
-                }
-                
-                return selected_indices;
-            }
-        }
-        
-        // If no groups with non-trumps, use the lowest rank group
-        let (_, indices) = &valid_groups[0];
-        let defender_hand_size = game_state.players()[game_state.current_defender()].hand_size();
-        let max_cards = defender_hand_size.min(indices.len());
-        
-        indices[0..max_cards].to_vec()
-    }
+    //fn make_multi_attack_move(&self, game_state: &GameState, player_idx: usize) -> Vec<usize> {
+    //    // Hard AI will strategically select multiple cards of the same rank
+    //    let player = &game_state.players()[player_idx];
+    //    let hand = player.hand();
+    //    let trump_suit = game_state.trump_suit();
+    //
+    //    if hand.is_empty() {
+    //        return Vec::new();
+    //    }
+    //
+    //    // Group cards by rank
+    //    let mut rank_groups: HashMap<Rank, Vec<usize>> = HashMap::new();
+    //    for (idx, card) in hand.iter().enumerate() {
+    //        rank_groups.entry(card.rank).or_default().push(idx);
+    //    }
+    //
+    //    // Find groups of 2 or more cards of the same rank
+    //    let mut valid_groups: Vec<(Rank, Vec<usize>)> = rank_groups
+    //        .into_iter()
+    //        .filter(|(_, indices)| indices.len() >= 2)
+    //        .collect();
+    //
+    //    if valid_groups.is_empty() {
+    //        return Vec::new(); // No valid multi-attack possible
+    //    }
+    //
+    //    // Sort groups by rank (lowest first)
+    //    valid_groups.sort_by_key(|(rank, _)| *rank);
+    //
+    //    // Find the lowest rank group that contains at least one non-trump
+    //    for (_rank, indices) in &valid_groups {
+    //        let has_non_trump = indices
+    //            .iter()
+    //            .any(|&idx| trump_suit.map_or(true, |t| hand[idx].suit != t));
+    //
+    //        if has_non_trump {
+    //            // Get the indices to use, but not more than defender can handle
+    //            let defender_idx = game_state.current_defender();
+    //            let defender_hand_size = game_state.players()[defender_idx].hand_size();
+    //            let max_cards = defender_hand_size.min(indices.len());
+    //
+    //            // Prioritize non-trumps first
+    //            let mut selected_indices: Vec<usize> = indices
+    //                .iter()
+    //                .filter(|&&idx| trump_suit.map_or(true, |t| hand[idx].suit != t))
+    //                .take(max_cards)
+    //                .cloned()
+    //                .collect();
+    //
+    //            // If we still need more cards, add trumps
+    //            if selected_indices.len() < max_cards {
+    //                let trump_indices: Vec<usize> = indices
+    //                    .iter()
+    //                    .filter(|&&idx| trump_suit.map_or(false, |t| hand[idx].suit == t))
+    //                    .take(max_cards - selected_indices.len())
+    //                    .cloned()
+    //                    .collect();
+    //
+    //                selected_indices.extend(trump_indices);
+    //            }
+    //
+    //            return selected_indices;
+    //        }
+    //    }
+    //
+    //    // If no groups with non-trumps, use the lowest rank group
+    //    let (_, indices) = &valid_groups[0];
+    //    let defender_hand_size = game_state.players()[game_state.current_defender()].hand_size();
+    //    let max_cards = defender_hand_size.min(indices.len());
+    //
+    //    indices[0..max_cards].to_vec()
+    //}
 }
 
 // Update AiPlayer to use strategy pattern
@@ -1328,7 +1317,5 @@ impl AiPlayer {
         self.strategy.make_defense_move(game_state, player_idx)
     }
 
-    pub fn make_multi_attack_move(&self, game_state: &GameState, player_idx: usize) -> Vec<usize> {
-        self.strategy.make_multi_attack_move(game_state, player_idx)
-    }
+    
 }

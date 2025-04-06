@@ -99,7 +99,7 @@ impl Widget for CardRowView {
             return;
         }
 
-        let card_width = 6_u16;
+        let card_width = 8_u16;
         let spacing = 1_u16;
 
         let visible_cards =

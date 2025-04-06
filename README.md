@@ -133,9 +133,13 @@ DURAK_DEBUG_FILE=durak_debug.log cargo run
 
 - [x] "Card Passing" Rule. Defender can pass an attack by playing a card of the same rank to the next player.
 
-- AI difficult level selection on main menu. 
+- [x] AI difficult level selection on main menu. 
     - Multi card attacks.
     - Better Defensive strategies. 
+## Bugs
+- `Safe exit` -> if an error occurs, the game will break and the terminal will be broken. 
+- Multi attack with the last cards in your hand causes an index out of bounds error. Not exactly sure why. (Error in `logic.rs`)
+
 
 ## License
 

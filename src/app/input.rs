@@ -67,8 +67,12 @@ pub fn handle_key_input(
                     Some(AppAction::AcknowledgeDraw)
                 }
                 GamePhase::Attack | GamePhase::Defense => match key {
+                    // vim keys
+                    KeyCode::Char('k') | KeyCode::Char('h') => Some(AppAction::SelectPrevCard),
+                    KeyCode::Char('j') | KeyCode::Char('l') => Some(AppAction::SelectNextCard),
                     KeyCode::Up | KeyCode::Left => Some(AppAction::SelectPrevCard),
                     KeyCode::Down | KeyCode::Right => Some(AppAction::SelectNextCard),
+                    KeyCode::Char('d') | KeyCode::Char('D') => Some(AppAction::ToggleDebug),
                     KeyCode::Char('m') | KeyCode::Char('M') => Some(AppAction::ToggleMultiSelect),
                     KeyCode::Char(' ') => Some(AppAction::ToggleCardSelection),
                     KeyCode::Enter => Some(AppAction::PlaySelectedCard),

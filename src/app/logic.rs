@@ -10,8 +10,8 @@
  *
  * The game flow is event-driven, with each user action triggering appropriate state changes
  * and AI responses when needed.
+*  Need a safe way to exit the game on error.
  */
-
 use super::input::{handle_key_input, AppAction};
 use super::render::render_ui;
 use super::state::AppState;
@@ -20,6 +20,7 @@ use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::backend::Backend;
 use ratatui::Terminal;
 use std::io;
+use std::result::Result::{Err, Ok};
 
 use crate::game::card::Card;
 use crate::game::{AiDifficulty, AiPlayer, GamePhase, GameState, PlayerType};
@@ -47,20 +48,22 @@ impl App {
 
         info("Adding computer player");
         game_state.add_player("Computer".to_string(), PlayerType::Computer);
-        let ai_difficulty = AiDifficulty::Medium;
-        info(format!("Setting initial AI difficulty to: {}", ai_difficulty));
 
         Self {
             game_state,
             app_state: AppState::MainMenu,
             selected_card_idx: None,
             selected_cards: Vec::new(),
-            ai_player: AiPlayer::new(ai_difficulty),
+            ai_player: AiPlayer::new(AiDifficulty::Medium),
             should_quit: false,
             show_debug: false,
             multiple_selection_mode: false,
             selected_difficulty: AiDifficulty::Medium,
         }
+    }
+
+    pub fn safe_exit(&mut self) {
+        self.should_quit = true;
     }
 
     pub fn toggle_debug(&mut self) {
@@ -78,13 +81,14 @@ impl App {
     pub fn return_to_menu(&mut self) {
         self.app_state = AppState::MainMenu;
     }
-    
+
     pub fn show_difficulty_select(&mut self) {
         self.app_state = AppState::DifficultySelect;
     }
-    
+
     pub fn select_difficulty(&mut self, difficulty: AiDifficulty) {
         self.selected_difficulty = difficulty;
+        self.ai_player = AiPlayer::new(difficulty);
         info(format!("AI difficulty changed to: {}", difficulty));
         self.app_state = AppState::MainMenu;
     }
@@ -196,13 +200,14 @@ impl App {
                     if *self.game_state.game_phase() == GamePhase::Defense {
                         // Check if the AI is still the defender
                         let current_defender = self.game_state.current_defender();
-                        let is_ai_defender = self.game_state.players()[current_defender].player_type() 
+                        let is_ai_defender = self.game_state.players()[current_defender]
+                            .player_type()
                             == &PlayerType::Computer;
-                        
+
                         // Different defender means a pass occurred
                         if current_defender != current_player_idx {
                             debug("Pass occurred, roles have changed");
-                            
+
                             if is_ai_defender {
                                 // If AI is still the defender (AI passed to AI), continue processing
                                 debug("AI passed to AI, continuing defense");
@@ -438,7 +443,7 @@ impl App {
                                 // Check if a pass occurred by looking at the defender change
                                 if self.game_state.current_defender() != player_idx {
                                     debug("AI passed the card to a different player");
-                                    
+
                                     // A pass occurred, we're done with this defense turn
                                     // The next player will need to handle these cards
                                     return Ok(());
@@ -566,21 +571,28 @@ impl App {
         self.selected_card_idx = None;
         self.selected_cards.clear();
         self.multiple_selection_mode = false;
-        
+
         // Create a new AI player with the selected difficulty
         self.ai_player = AiPlayer::new(self.selected_difficulty);
-        debug(format!("Starting game with AI difficulty: {}", self.selected_difficulty));
+        debug(format!(
+            "Starting game with AI difficulty: {}",
+            self.selected_difficulty
+        ));
 
         // Log the AI difficulty level characteristics
         match self.selected_difficulty {
             AiDifficulty::Easy => {
                 debug("Easy AI: Will play lowest cards, often take cards instead of defending");
-            },
+            }
             AiDifficulty::Medium => {
-                debug("Medium AI: Will use basic strategy, manage trumps, and sometimes pass cards");
-            },
+                debug(
+                    "Medium AI: Will use basic strategy, manage trumps, and sometimes pass cards",
+                );
+            }
             AiDifficulty::Hard => {
-                debug("Hard AI: Will strategically track cards, exploit weaknesses, and plan ahead");
+                debug(
+                    "Hard AI: Will strategically track cards, exploit weaknesses, and plan ahead",
+                );
             }
         }
 
@@ -668,11 +680,12 @@ impl App {
                         let current_defender = self.game_state.current_defender();
                         if current_defender != current_player_idx {
                             debug("Detected pass - different player now defending");
-                            
+
                             // Check if AI is now the defender
-                            let is_ai_defender = self.game_state.players()[current_defender].player_type() 
+                            let is_ai_defender = self.game_state.players()[current_defender]
+                                .player_type()
                                 == &PlayerType::Computer;
-                            
+
                             if is_ai_defender {
                                 debug("AI is now defending after pass, processing AI turn");
                                 self.process_ai_turn();
@@ -759,6 +772,7 @@ impl App {
                 "Multi-attack with {} cards",
                 self.selected_cards.len()
             ));
+            // Check error here.
             let result = self.multi_attack(player_idx);
             self.selected_cards.clear();
             result
@@ -795,12 +809,13 @@ impl App {
                             // Check if a pass occurred by looking at the defender change
                             if self.game_state.current_defender() != player_idx {
                                 debug("Player passed the card to a different player!");
-                                
+
                                 // Process AI's turn if they're now the defender after the pass
                                 let new_defender = self.game_state.current_defender();
-                                let is_ai_defender = self.game_state.players()[new_defender].player_type() 
+                                let is_ai_defender = self.game_state.players()[new_defender]
+                                    .player_type()
                                     == &PlayerType::Computer;
-                                
+
                                 if is_ai_defender {
                                     // Don't return yet, let the calling function handle AI processing
                                     debug("AI needs to defend after player's pass");
@@ -990,6 +1005,7 @@ impl App {
             return Err("Not in attack phase".to_string());
         }
         // sort selected cards
+        // Bug occurs here??
         let mut sorted_indexes = self.selected_cards.clone();
         sorted_indexes.sort_by(|a, b| b.cmp(a));
         // Get the hand, validate the indexes.
