@@ -101,12 +101,46 @@ pub fn render_ui(app: &App, f: &mut Frame<'_>) {
             f.render_widget(game_ui, area);
         }
         AppState::GameOver => {
-            // New game over screen.
+            // Create the winner message
+            let winner_message = if let Some(winner_idx) = app.game_state.winner() {
+                let winner_name = &app.game_state.players()[winner_idx].name();
+                format!("{} is the winner!", winner_name)
+            } else {
+                "Game Over!".to_string()
+            };
+            
+            // Layout for the game over screen
+            let layout = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Percentage(30),
+                    Constraint::Length(3),  // Title
+                    Constraint::Length(3),  // Winner message
+                    Constraint::Length(3),  // Instructions
+                    Constraint::Percentage(30),
+                ])
+                .split(area);
+            
+            // Game over title
             let title = Paragraph::new("Game Over")
                 .style(Style::default().fg(Color::Green))
                 .alignment(ratatui::layout::Alignment::Center)
                 .block(Block::default().borders(Borders::ALL));
-            f.render_widget(title, area);
+            
+            // Winner message
+            let winner_text = Paragraph::new(winner_message)
+                .style(Style::default().fg(Color::Yellow))
+                .alignment(ratatui::layout::Alignment::Center);
+                
+            // Instructions
+            let instructions = Paragraph::new("Press 'N' for new game | Press 'Q' to quit")
+                .style(Style::default().fg(Color::White))
+                .alignment(ratatui::layout::Alignment::Center);
+            
+            // Render all components
+            f.render_widget(title, layout[1]);
+            f.render_widget(winner_text, layout[2]);
+            f.render_widget(instructions, layout[3]);
         }
     }
 

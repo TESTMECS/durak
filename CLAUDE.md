@@ -20,3 +20,9 @@
 - Use strong typing with enums for state management
 - Separate game logic from UI rendering
 - Use log macros (info!, debug!, error!) for important state changes
+## Code Quality
+- Prefer simple solutions. 
+- Avoid code duplication. Check if functionality can be reused from other files. 
+- Try to keep code in smaller files around 200 to 300 lines. Files longer than this are ok as long as they are self contained. 
+- Be a minimalist in your thinking. 
+- Only implement features that are well-understood. 

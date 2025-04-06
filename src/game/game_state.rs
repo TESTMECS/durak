@@ -130,6 +130,7 @@ impl GameState {
             let attack_card = self.table_cards[attack_idx].0;
 
             // Check if defense is valid
+
             let is_valid = if let Some(trump) = self.trump_suit {
                 if attack_card.suit == trump {
                     // If attacking with trump, must defend with higher trump
@@ -316,16 +317,34 @@ impl GameState {
         }
     }
 
-    pub fn check_game_over(&self) -> bool {
+    pub fn check_game_over(&mut self) -> bool {
         if self.deck.is_empty() {
             let mut players_with_cards = 0;
-            for player in self.players.iter() {
+            let mut last_player_with_cards = None;
+            
+            // Count players with cards and remember the last one with cards
+            for (idx, player) in self.players.iter().enumerate() {
                 if !player.is_empty_hand() {
                     players_with_cards += 1;
+                    last_player_with_cards = Some(idx);
                 }
             }
+            
             // Game ends when only one player (or zero) has cards left
             if players_with_cards <= 1 {
+                // If there's one player with cards, they're the "durak" (loser)
+                // In Durak, the winner is the player who gets rid of cards first
+                if players_with_cards == 1 {
+                    if let Some(loser_idx) = last_player_with_cards {
+                        // In a 2-player game, if player 1 is the loser, then player 0 is the winner
+                        let winner_idx = if loser_idx == 1 { 0 } else { 1 };
+                        self.winner = Some(winner_idx);
+                        self.game_phase = GamePhase::GameOver;
+                    }
+                } else if players_with_cards == 0 {
+                    // Draw or edge case - no real winner in Durak, but let's handle it
+                    self.game_phase = GamePhase::GameOver;
+                }
                 return true;
             }
             false // More than one player has cards

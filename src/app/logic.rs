@@ -113,7 +113,7 @@ impl App {
             turn_counter += 1;
             debug(format!("AI turn iteration {}", turn_counter));
 
-            // Check for game over
+            // Check for game over - this also sets the winner
             if self.game_state.check_game_over() {
                 self.app_state = AppState::GameOver;
                 return;
@@ -244,7 +244,7 @@ impl App {
                 }
             }
 
-            // Check for game over after each action
+            // Check for game over after each action - this also sets the winner
             if self.game_state.check_game_over() {
                 self.app_state = AppState::GameOver;
                 return;
@@ -655,7 +655,7 @@ impl App {
                 self.game_state = GameState::force_attack_phase(self.game_state.clone());
             }
 
-            // Check game over
+            // Check game over - this also sets the winner
             if self.game_state.check_game_over() {
                 self.app_state = AppState::GameOver;
                 return;
