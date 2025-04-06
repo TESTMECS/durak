@@ -113,6 +113,31 @@ impl GameState {
         Err("Invalid card index")
     }
 
+    // Handle passing an attack to the next player
+    pub fn pass_attack(&mut self, card_idx: usize, _attack_idx: usize) -> Result<(), &'static str> {
+        let defender = &mut self.players[self.current_defender];
+        
+        // Remove the card from defender's hand
+        if let Some(card) = defender.remove_card(card_idx) {
+            // Add a new attack card to the table
+            self.table_cards.push((card, None));
+            
+            // Swap the roles - the current defender becomes the attacker
+            let old_defender = self.current_defender;
+            self.current_attacker = old_defender;
+            
+            // The original attacker becomes the defender
+            self.current_defender = (old_defender + 1) % self.players.len();
+            
+            // Stay in Defense phase
+            self.game_phase = GamePhase::Defense;
+            
+            return Ok(());
+        }
+        
+        Err("Failed to remove card from hand during pass")
+    }
+
     pub fn defend(&mut self, card_idx: usize) -> Result<(), &'static str> {
         // Find the first undefended attack card
         let undefended_idx = self
@@ -128,9 +153,15 @@ impl GameState {
 
             let defense_card = defender.hand()[card_idx];
             let attack_card = self.table_cards[attack_idx].0;
+            
+            // First check if this is a pass (podkidnoy variant)
+            // Check for same rank (passing condition)
+            if defense_card.can_pass(&attack_card) {
+                // This is a pass - handle differently from a regular defense
+                return self.pass_attack(card_idx, attack_idx);
+            }
 
             // Check if defense is valid
-
             let is_valid = if let Some(trump) = self.trump_suit {
                 if attack_card.suit == trump {
                     // If attacking with trump, must defend with higher trump

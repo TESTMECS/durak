@@ -1,5 +1,6 @@
 use crate::game::card::{Card, Rank};
 use crate::game::game_state::GameState;
+use crate::ui::debug_overlay::debug;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
@@ -233,6 +234,30 @@ impl AiStrategy for MediumStrategy {
             .iter()
             .find(|(_, defense)| defense.is_none())
         {
+            // First check for passing cards (same rank as the attacking card)
+            let possible_passes: Vec<(usize, Card)> = hand
+                .iter()
+                .enumerate()
+                .filter(|(_, card)| card.can_pass(attacking_card))
+                .map(|(idx, &card)| (idx, card))
+                .collect();
+
+            // Medium AI has 30% chance to use passing if possible
+            if !possible_passes.is_empty() {
+                let pass_chance = rand::random::<f32>();
+                if pass_chance < 0.3 {
+                    // Return a random pass card
+                    let rand_idx = rand::random::<usize>() % possible_passes.len();
+                    let (hand_idx, pass_card) = possible_passes[rand_idx];
+                    debug(format!(
+                        "Medium AI choosing to PASS with {} (same rank as {})",
+                        pass_card, attacking_card,
+                    ));
+                    return Some(vec![(hand_idx, pass_card)]);
+                }
+            }
+
+            // If not passing or no passing options, look for standard defense
             let valid_defenses: Vec<(usize, Card)> = hand
                 .iter()
                 .enumerate()
@@ -459,7 +484,30 @@ impl AiStrategy for HardStrategy {
             .find(|(_, (_, defense))| defense.is_none())
             .map(|(idx, (attack, _))| (idx, attack));
 
-        if let Some((table_idx, attack_card)) = undefended_attack {
+        if let Some((_table_idx, attack_card)) = undefended_attack {
+            // Check for potential passing cards first
+            let possible_passes: Vec<(usize, Card)> = hand
+                .iter()
+                .enumerate()
+                .filter(|(_, card)| card.can_pass(attack_card))
+                .map(|(idx, &card)| (idx, card))
+                .collect();
+
+            // Hard AI is more aggressive with passing - 50% chance if available
+            if !possible_passes.is_empty() {
+                let pass_chance = rand::random::<f32>();
+                if pass_chance < 0.5 {
+                    // Select a random pass card
+                    let rand_idx = rand::random::<usize>() % possible_passes.len();
+                    let (hand_idx, pass_card) = possible_passes[rand_idx];
+                    println!(
+                        "Hard AI choosing to PASS with {} (same rank as {})",
+                        pass_card, attack_card
+                    );
+                    return Some(vec![(hand_idx, pass_card)]);
+                }
+            }
+
             // Find all valid defenses for this attack
             let valid_defenses: Vec<(usize, Card)> = hand
                 .iter()
@@ -469,7 +517,14 @@ impl AiStrategy for HardStrategy {
                 .collect();
 
             if valid_defenses.is_empty() {
-                return None;
+                // If no valid defense but we have a pass, use it
+                if !possible_passes.is_empty() {
+                    let rand_idx = rand::random::<usize>() % possible_passes.len();
+                    let (hand_idx, pass_card) = possible_passes[rand_idx];
+                    println!("Hard AI forced to PASS with {} as last resort", pass_card);
+                    return Some(vec![(hand_idx, pass_card)]);
+                }
+                return None; // Can't defend or pass
             }
 
             // Hard AI strategy: Prioritize lowest valid non-trump, or lowest trump if necessary
@@ -482,8 +537,8 @@ impl AiStrategy for HardStrategy {
                 // Use lowest non-trump defense
                 let non_trump_defense = non_trump_defenses.iter().min_by_key(|(_, c)| c.rank);
 
-                if let Some(&&(_idx, card)) = non_trump_defense {
-                    return Some(vec![(table_idx, card)]);
+                if let Some(&&(hand_idx, card)) = non_trump_defense {
+                    return Some(vec![(hand_idx, card)]);
                 }
             }
 
@@ -493,8 +548,8 @@ impl AiStrategy for HardStrategy {
                 .filter(|(_, c)| c.suit == trump_suit)
                 .min_by_key(|(_, c)| c.rank);
 
-            if let Some(&(_idx, card)) = lowest_trump_defense {
-                return Some(vec![(table_idx, card)]);
+            if let Some(&(hand_idx, card)) = lowest_trump_defense {
+                return Some(vec![(hand_idx, card)]);
             }
         }
 

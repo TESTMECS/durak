@@ -44,7 +44,7 @@ impl<'a> GameUI<'a> {
             }
             GamePhase::Defense => {
                 let defender = &self.game_state.players()[self.game_state.current_defender()];
-                format!("{}'s turn to defend", defender.name())
+                format!("{}'s turn to defend or pass", defender.name())
             }
             GamePhase::Drawing => "Drawing cards...".to_string(),
             GamePhase::GameOver => {
@@ -146,7 +146,7 @@ impl<'a> GameUI<'a> {
         let current_phase = self.game_state.game_phase();
         let help_text = match current_phase {
             GamePhase::Attack => format!("←/→: Select card | M: Multi-select mode | Space: Toggle selection | Enter: Play card(s) | P: Pass | q: Quit"),
-            GamePhase::Defense => format!("←/→: Select card | M: Multi-select mode | Space: Toggle selection | Enter: Play card | T: Take cards | q: Quit"),
+            GamePhase::Defense => format!("←/→: Select card | M: Multi-select mode | Space: Toggle selection | Enter: Play card (same rank = pass) | T: Take cards | q: Quit"),
             GamePhase::GameOver => "Q: Quit | N: New game".to_string(),
             GamePhase::Drawing => "Press any key to continue".to_string(),
             _ => "".to_string(),

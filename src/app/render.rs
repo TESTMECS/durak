@@ -61,6 +61,8 @@ pub fn render_ui(app: &App, f: &mut Frame<'_>) {
                 Line::from(" "),
                 Line::from("Gameplay:"),
                 Line::from("- Attacker plays a card; defender must beat it with higher card of same suit or trump"),
+                Line::from("- Passing: Defender can PASS a card by playing same rank (7♠ → 7♥) to the next player"),
+                Line::from("- When a pass occurs, the original attacker must now defend against both cards"),
                 Line::from("- After successful defense, attacker can add cards of the same rank as those on table"),
                 Line::from("- Defender can defend against multiple cards if they have matching cards"),
                 Line::from("- If defender can't or won't defend, they pick up all cards on the table"),

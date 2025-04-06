@@ -179,11 +179,32 @@ impl App {
                     let defense_result = self.handle_ai_defense(current_player_idx);
                     debug(format!("AI defense result: {:?}", defense_result));
 
-                    // Check what phase we ended up in
+                    // After AI defense, check the current state
+                    // First, double-check if we're still in Defense phase but roles have changed
                     if *self.game_state.game_phase() == GamePhase::Defense {
-                        // If still in Defense phase, transition to Drawing
-                        debug("AI defense incomplete, forcing draw phase");
-                        self.game_state.draw_cards();
+                        // Check if the AI is still the defender
+                        let current_defender = self.game_state.current_defender();
+                        let is_ai_defender = self.game_state.players()[current_defender].player_type() 
+                            == &PlayerType::Computer;
+                        
+                        // Different defender means a pass occurred
+                        if current_defender != current_player_idx {
+                            debug("Pass occurred, roles have changed");
+                            
+                            if is_ai_defender {
+                                // If AI is still the defender (AI passed to AI), continue processing
+                                debug("AI passed to AI, continuing defense");
+                                continue;
+                            } else {
+                                // AI passed to human, end AI processing
+                                debug("AI passed to human, ending AI processing");
+                                return;
+                            }
+                        } else {
+                            // Still the same defender, transition to Drawing
+                            debug("AI defense incomplete, forcing draw phase");
+                            self.game_state.draw_cards();
+                        }
                     } else if *self.game_state.game_phase() == GamePhase::Drawing {
                         // Already in drawing phase, just draw
                         debug("AI defense complete, already in drawing phase");
@@ -402,6 +423,15 @@ impl App {
                             Ok(_) => {
                                 debug(format!("AI successfully defended with card {}", hand_idx));
 
+                                // Check if a pass occurred by looking at the defender change
+                                if self.game_state.current_defender() != player_idx {
+                                    debug("AI passed the card to a different player");
+                                    
+                                    // A pass occurred, we're done with this defense turn
+                                    // The next player will need to handle these cards
+                                    return Ok(());
+                                }
+
                                 // Check if all cards are defended now
                                 let all_defended = !self
                                     .game_state
@@ -594,11 +624,27 @@ impl App {
                         return;
                     }
 
-                    // If all cards defended, game will transition to Drawing phase
+                    // After defense, check game state
                     if *self.game_state.game_phase() == GamePhase::Drawing {
+                        // If drawing phase, proceed with drawing
                         self.game_state.draw_cards();
                         // After drawing, process AI's turn if they are next
                         self.process_ai_turn();
+                    } else if *self.game_state.game_phase() == GamePhase::Defense {
+                        // Check if a different player is now defending (pass occurred)
+                        let current_defender = self.game_state.current_defender();
+                        if current_defender != current_player_idx {
+                            debug("Detected pass - different player now defending");
+                            
+                            // Check if AI is now the defender
+                            let is_ai_defender = self.game_state.players()[current_defender].player_type() 
+                                == &PlayerType::Computer;
+                            
+                            if is_ai_defender {
+                                debug("AI is now defending after pass, processing AI turn");
+                                self.process_ai_turn();
+                            }
+                        }
                     }
                 }
                 _ => {
@@ -712,6 +758,22 @@ impl App {
                     if let Some(idx) = self.selected_card_idx {
                         if let Ok(_) = self.game_state.defend(idx) {
                             debug(format!("Successfully defended with card {}", idx));
+
+                            // Check if a pass occurred by looking at the defender change
+                            if self.game_state.current_defender() != player_idx {
+                                debug("Player passed the card to a different player!");
+                                
+                                // Process AI's turn if they're now the defender after the pass
+                                let new_defender = self.game_state.current_defender();
+                                let is_ai_defender = self.game_state.players()[new_defender].player_type() 
+                                    == &PlayerType::Computer;
+                                
+                                if is_ai_defender {
+                                    // Don't return yet, let the calling function handle AI processing
+                                    debug("AI needs to defend after player's pass");
+                                }
+                                return Ok(());
+                            }
 
                             // Check if all attacks are defended
                             let all_defended = !self
