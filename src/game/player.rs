@@ -21,15 +21,26 @@ impl Player {
             hand: Vec::new(),
         }
     }
-
+    /*
+     * Get the player name
+     * returns: &str
+     * */
     pub fn name(&self) -> &str {
         &self.name
     }
 
+    /*
+     * Get the player type
+     * returns: &PlayerType: Human | Computer
+     * */
     pub fn player_type(&self) -> &PlayerType {
         &self.player_type
     }
 
+    /*
+     * Get the player hand
+     * returns: &Vec<Card> where a card is a struct of rank and suit
+     * */
     pub fn hand(&self) -> &[Card] {
         &self.hand
     }
@@ -59,15 +70,6 @@ impl Player {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn remove_specific_card(&mut self, card: Card) -> Option<Card> {
-        if let Some(pos) = self.hand.iter().position(|c| *c == card) {
-            Some(self.hand.remove(pos))
-        } else {
-            None
-        }
-    }
-
     pub fn hand_size(&self) -> usize {
         self.hand.len()
     }
@@ -84,6 +86,7 @@ impl Player {
             .min_by_key(|(_, card)| card.rank)
             .map(|(idx, &card)| (idx, card))
     }
+
     #[allow(dead_code)]
     pub fn get_valid_defenses(
         &self,

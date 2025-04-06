@@ -14,6 +14,7 @@ lazy_static! {
     static ref UI_LOG_BUFFER: Mutex<Vec<(String, String, Level)>> = Mutex::new(Vec::new());
 }
 
+#[allow(dead_code)]
 pub struct LogMessage {
     pub timestamp: String,
     pub message: String,

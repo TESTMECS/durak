@@ -1,9 +1,6 @@
 use crate::app::logic::App; // Import App from the logic module
 use crate::app::state::AppState; // Import AppState
 use crate::ui::debug_overlay::DebugOverlay;
-// Remove unused GameState import
-// use crate::game::GameState;
-// Fix import paths for UI components
 use crate::ui::game_ui::GameUI;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
@@ -96,16 +93,20 @@ pub fn render_ui(app: &App, f: &mut Frame<'_>) {
             f.render_widget(title, layout[0]);
             f.render_widget(rules, layout[1]);
         }
-        AppState::Playing | AppState::GameOver => {
-            // Render game UI with multiple selection support
+        AppState::Playing => {
             let mut game_ui = GameUI::new(&app.game_state).select_card(app.selected_card_idx);
-
-            // Add multiple selection support
             if app.multiple_selection_mode {
                 game_ui = game_ui.with_multiple_selection(&app.selected_cards);
             }
-
             f.render_widget(game_ui, area);
+        }
+        AppState::GameOver => {
+            // New game over screen.
+            let title = Paragraph::new("Game Over")
+                .style(Style::default().fg(Color::Green))
+                .alignment(ratatui::layout::Alignment::Center)
+                .block(Block::default().borders(Borders::ALL));
+            f.render_widget(title, area);
         }
     }
 
