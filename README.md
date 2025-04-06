@@ -124,20 +124,15 @@ To enable debug logging:
 DURAK_DEBUG_FILE=durak_debug.log cargo run
 ```
 
-## Recent Fixes
+## Future Improvements for MVP
 
-- Fixed cursor visibility issue in multiselect mode
-- Added ability for AI to attack with multiple cards based on difficulty level
-- Improved AI defense logic to properly handle multiple attack cards
-- Fixed issue where game would get stuck when AI is defending against multiple cards:
-  - Added coordinated planning between defense simulation and execution
-  - Implemented defense plan tracking for consistent decision making
-  - Enhanced AI to maintain a consistent strategy across all defenses
-  - Fixed edge case handling for partially defended attacks
-  - Improved AI decision-making for when to take cards vs. attempt defense
+- AI difficult level selection on main menu. 
+    - Multi card attacks.
+    - Better Defensive strategies. 
+- Show case winner on the game over screen.
+- "Card Passing" Rule. If a player attacks cards with same rank, they pass the attack to the next player. 
 
-## Refactoring.
-- Logic will undergo refactoring
+
 
 ## License
 

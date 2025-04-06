@@ -108,41 +108,41 @@ impl App {
         // Use a counter to prevent potential infinite loops
         let mut turn_counter = 0;
         const MAX_TURNS: i32 = 10; // Safety limit for iterations
-        
+
         while turn_counter < MAX_TURNS {
             turn_counter += 1;
             debug(format!("AI turn iteration {}", turn_counter));
-            
+
             // Check for game over
             if self.game_state.check_game_over() {
                 self.app_state = AppState::GameOver;
                 return;
             }
-            
+
             // Get the current player based on game phase
             let current_player_idx = self.current_player_index();
-            
+
             // Check if it's AI's turn
-            let is_ai_turn = self.game_state.players()[current_player_idx].player_type() 
+            let is_ai_turn = self.game_state.players()[current_player_idx].player_type()
                 == &PlayerType::Computer;
-                
+
             if !is_ai_turn {
                 debug("Not AI's turn, ending AI processing");
                 return; // Not AI's turn
             }
-            
+
             debug(format!(
                 "AI playing in phase: {:?}",
                 self.game_state.game_phase()
             ));
-            
+
             // Log current game state for debugging
             debug(format!(
                 "Current attacker: {}, Current defender: {}",
                 self.game_state.current_attacker(),
                 self.game_state.current_defender()
             ));
-            
+
             // Handle based on game phase
             match *self.game_state.game_phase() {
                 GamePhase::Attack => {
@@ -150,7 +150,7 @@ impl App {
                     debug("AI attempting to attack");
                     let attack_result = self.handle_ai_attack(current_player_idx);
                     debug(format!("AI attack result: {:?}", attack_result));
-                    
+
                     // Check if we successfully transitioned to Defense phase
                     if *self.game_state.game_phase() == GamePhase::Defense {
                         // We're now in defense phase
@@ -158,7 +158,7 @@ impl App {
                         let is_human_defender = self.game_state.players()[defender_idx]
                             .player_type()
                             == &PlayerType::Human;
-                            
+
                         if is_human_defender {
                             debug("Human needs to defend, ending AI processing");
                             return;
@@ -178,7 +178,7 @@ impl App {
                     debug("AI attempting to defend");
                     let defense_result = self.handle_ai_defense(current_player_idx);
                     debug(format!("AI defense result: {:?}", defense_result));
-                    
+
                     // Check what phase we ended up in
                     if *self.game_state.game_phase() == GamePhase::Defense {
                         // If still in Defense phase, transition to Drawing
@@ -194,19 +194,21 @@ impl App {
                     // Drawing phase logic
                     debug("AI processing drawing phase");
                     self.game_state.draw_cards();
-                    
+
                     // After drawing, check the new phase and player
                     if *self.game_state.game_phase() == GamePhase::Attack {
                         let attacker_idx = self.game_state.current_attacker();
                         let is_human_attacker = self.game_state.players()[attacker_idx]
                             .player_type()
                             == &PlayerType::Human;
-                            
+
                         if is_human_attacker {
                             debug("Human's turn after drawing, ending AI processing");
                             return;
                         } else {
-                            debug("AI's turn to attack after drawing, continuing to next iteration");
+                            debug(
+                                "AI's turn to attack after drawing, continuing to next iteration",
+                            );
                             continue; // Process the attack in the next iteration
                         }
                     }
@@ -216,38 +218,38 @@ impl App {
                     return;
                 }
             }
-            
+
             // Safety check for phase transitions
             if *self.game_state.game_phase() == GamePhase::Drawing {
                 debug("Handling drawing phase transition");
                 self.game_state.draw_cards(); // Process the draw
-                
+
                 // Check if we successfully moved to Attack phase
                 if *self.game_state.game_phase() == GamePhase::Drawing {
                     // If still in drawing phase, force to attack phase
                     debug("Forcing transition from Drawing to Attack phase");
                     self.game_state = GameState::force_attack_phase(self.game_state.clone());
                 }
-                
+
                 // Check if it's now a human player's turn
                 if *self.game_state.game_phase() == GamePhase::Attack {
                     let attacker_idx = self.game_state.current_attacker();
-                    let is_human_attacker = self.game_state.players()[attacker_idx].player_type() 
-                        == &PlayerType::Human;
-                        
+                    let is_human_attacker =
+                        self.game_state.players()[attacker_idx].player_type() == &PlayerType::Human;
+
                     if is_human_attacker {
                         debug("Human's turn after drawing phase completed, ending AI processing");
                         return;
                     }
                 }
             }
-            
+
             // Check for game over after each action
             if self.game_state.check_game_over() {
                 self.app_state = AppState::GameOver;
                 return;
             }
-            
+
             // If we've reached the iteration limit, force a return to prevent issues
             if turn_counter >= MAX_TURNS - 1 {
                 debug("Reached maximum AI turn iterations, forcing end to prevent issues");
@@ -261,17 +263,20 @@ impl App {
 
     fn handle_ai_attack(&mut self, player_idx: usize) -> Result<(), String> {
         debug("AI is attacking");
-        
+
         // Verify we're in the correct phase
         if *self.game_state.game_phase() != GamePhase::Attack {
             debug("AI called to attack but not in attack phase");
             return Ok(());
         }
-        
+
         // Validate the current attacker
         if self.game_state.current_attacker() != player_idx {
-            debug(format!("Wrong player attacking: expected {}, got {}", 
-                self.game_state.current_attacker(), player_idx));
+            debug(format!(
+                "Wrong player attacking: expected {}, got {}",
+                self.game_state.current_attacker(),
+                player_idx
+            ));
             return Ok(());
         }
 
@@ -279,98 +284,116 @@ impl App {
         let attack_cards = self
             .ai_player
             .make_attack_move(&self.game_state, player_idx);
-        
+
         if let Some(cards) = attack_cards {
             if cards.is_empty() {
                 debug("AI decided to pass");
                 return Ok(()); // AI passes
             }
-            
+
             // Sort and make attacks (highest index first to prevent shifting)
             let mut sorted_indices: Vec<usize> = cards.iter().map(|(idx, _)| *idx).collect();
             sorted_indices.sort_by(|a, b| b.cmp(a));
-            
+
             let mut attack_successful = false;
-            
+
             for &idx in sorted_indices.iter() {
                 match self.game_state.attack(idx, player_idx) {
                     Ok(_) => {
                         attack_successful = true;
                         debug(format!("AI successfully attacked with card {}", idx));
-                    },
+                    }
                     Err(e) => {
                         debug(format!("AI attack failed: {}", e));
                         return Err(e.to_string());
                     }
                 }
             }
-            
+
             if attack_successful {
                 debug(format!(
                     "AI successfully attacked with {} cards",
                     sorted_indices.len()
                 ));
-                
+
                 // Verify we've transitioned to defense phase
                 if *self.game_state.game_phase() != GamePhase::Defense {
-                    debug("Warning: Game did not transition to Defense phase after successful attack");
+                    debug(
+                        "Warning: Game did not transition to Defense phase after successful attack",
+                    );
                     let defender_idx = (player_idx + 1) % self.game_state.players().len();
-                    self.game_state.set_phase_to_defense(player_idx, defender_idx);
+                    self.game_state
+                        .set_phase_to_defense(player_idx, defender_idx);
                 }
             }
         } else {
             debug("AI decided to pass (no attacks)");
         }
-        
+
         Ok(())
     }
 
     fn handle_ai_defense(&mut self, player_idx: usize) -> Result<(), String> {
         debug("AI is defending");
-        
+
         // Check if the game state is valid for defense
         if *self.game_state.game_phase() != GamePhase::Defense {
             debug("AI called to defend but not in defense phase");
             return Ok(());
         }
-        
+
         // Verify the correct player is defending
         if self.game_state.current_defender() != player_idx {
-            debug(format!("Wrong player defending: expected {}, got {}", 
-                self.game_state.current_defender(), player_idx));
+            debug(format!(
+                "Wrong player defending: expected {}, got {}",
+                self.game_state.current_defender(),
+                player_idx
+            ));
             return Ok(());
         }
-        
+
         // Check if AI should take cards instead of defending
-        if self.ai_player.should_take_cards(&self.game_state, player_idx) {
+        if self
+            .ai_player
+            .should_take_cards(&self.game_state, player_idx)
+        {
             debug("AI decided to take cards");
             if let Err(e) = self.game_state.take_cards() {
                 return Err(e.to_string());
             }
             return Ok(());
         }
-        
+
         // Get the table state
         let table_cards = self.game_state.table_cards();
         if table_cards.is_empty() {
             debug("No cards to defend against");
             return Ok(());
         }
-        
+
         // Check for undefended attacks
         let has_undefended = table_cards.iter().any(|(_, defense)| defense.is_none());
         if !has_undefended {
             debug("All attacks already defended");
             return Ok(());
         }
-        
+
         // Try to defend each undefended attack one at a time
         let mut defense_failed = false;
-        
-        while !defense_failed && self.game_state.table_cards().iter().any(|(_, d)| d.is_none()) {
-            if let Some(defense_cards) = self.ai_player.make_defense_move(&self.game_state, player_idx) {
+
+        while !defense_failed
+            && self
+                .game_state
+                .table_cards()
+                .iter()
+                .any(|(_, d)| d.is_none())
+        {
+            if let Some(defense_cards) = self
+                .ai_player
+                .make_defense_move(&self.game_state, player_idx)
+            {
                 debug(format!("AI defending with cards: {:?}", defense_cards));
-                
+
                 // Process each defense card
                 for (table_idx, card) in &defense_cards {
                     // We need to find the hand index of this card
@@ -378,17 +401,20 @@ impl App {
                         match self.game_state.defend(hand_idx) {
                             Ok(_) => {
                                 debug(format!("AI successfully defended with card {}", hand_idx));
-                                
+
                                 // Check if all cards are defended now
-                                let all_defended = !self.game_state.table_cards()
+                                let all_defended = !self
+                                    .game_state
+                                    .table_cards()
                                     .iter()
                                     .any(|(_, defense)| defense.is_none());
-                                    
+
                                 if all_defended {
                                     debug("AI successfully defended all attacks");
-                                    
+
                                     // Get all cards from the table for discarding
-                                    let cards_to_discard: Vec<(usize, Card)> = self.game_state
+                                    let cards_to_discard: Vec<(usize, Card)> = self
+                                        .game_state
                                         .table_cards()
                                         .iter()
                                         .enumerate()
@@ -396,12 +422,12 @@ impl App {
                                             defense.map(|card| (idx, card))
                                         })
                                         .collect();
-                                        
+
                                     // Discard the cards
                                     self.game_state.discard_cards(cards_to_discard);
                                     return Ok(());
                                 }
-                            },
+                            }
                             Err(e) => {
                                 debug(format!("AI defense failed: {}", e));
                                 defense_failed = true;
@@ -419,15 +445,21 @@ impl App {
                 defense_failed = true;
             }
         }
-        
+
         // If AI couldn't defend everything, take cards
-        if defense_failed || self.game_state.table_cards().iter().any(|(_, d)| d.is_none()) {
+        if defense_failed
+            || self
+                .game_state
+                .table_cards()
+                .iter()
+                .any(|(_, d)| d.is_none())
+        {
             debug("AI taking cards after failed defense");
             if let Err(e) = self.game_state.take_cards() {
                 return Err(e.to_string());
             }
         }
-        
+
         Ok(())
     }
 

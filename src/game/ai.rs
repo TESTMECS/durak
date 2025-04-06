@@ -38,11 +38,7 @@ trait AiStrategy {
         player_idx: usize,
     ) -> Option<Vec<(usize, Card)>>; //Always will return cards to attack with or an error.
 
-    fn make_multi_attack_move(
-        &self,
-        game_state: &GameState,
-        player_idx: usize,
-    ) -> Vec<usize> {
+    fn make_multi_attack_move(&self, game_state: &GameState, player_idx: usize) -> Vec<usize> {
         // Default implementation returns empty vec - no multi-attack by default
         Vec::new()
     }
@@ -396,9 +392,9 @@ impl AiStrategy for HardStrategy {
         // Next, look for duplicates (pairs) in hand to play
         let mut dupes = Vec::new();
         for (rank, cards) in card_counts.iter() {
-            if cards.len() >= 2 && trump_suit.map_or(true, |trump| {
-                cards.iter().any(|(_, c)| c.suit != trump)
-            }) {
+            if cards.len() >= 2
+                && trump_suit.map_or(true, |trump| cards.iter().any(|(_, c)| c.suit != trump))
+            {
                 // If we have duplicates, prefer non-trumps
                 let non_trumps: Vec<&(usize, Card)> = cards
                     .iter()
@@ -485,21 +481,19 @@ impl AiStrategy for HardStrategy {
 
             if !non_trump_defenses.is_empty() {
                 // Use lowest non-trump defense
-                let non_trump_defense = non_trump_defenses
-                    .iter()
-                    .min_by_key(|(_, c)| c.rank);
-                    
+                let non_trump_defense = non_trump_defenses.iter().min_by_key(|(_, c)| c.rank);
+
                 if let Some(&&(_idx, card)) = non_trump_defense {
                     return Some(vec![(table_idx, card)]);
                 }
-            } 
-            
+            }
+
             // Have to use a trump, use lowest one
             let lowest_trump_defense = valid_defenses
                 .iter()
                 .filter(|(_, c)| c.suit == trump_suit)
                 .min_by_key(|(_, c)| c.rank);
-                
+
             if let Some(&(_idx, card)) = lowest_trump_defense {
                 return Some(vec![(table_idx, card)]);
             }

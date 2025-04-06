@@ -4,8 +4,6 @@
 - Build: `cargo build`
 - Run: `cargo run`
 - Release build: `cargo run --release`
-- Test all: `cargo test`
-- Test single: `cargo test test_name`
 - Debug with logging: `DURAK_DEBUG_FILE=durak_debug.log cargo run`
 - Clippy lint: `cargo clippy`
 - Format: `cargo fmt`
