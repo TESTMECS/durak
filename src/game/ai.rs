@@ -1,6 +1,5 @@
 use crate::game::card::{Card, Rank};
-use crate::game::game_state::{GamePhase, GameState};
-use rand::Rng;
+use crate::game::game_state::GameState;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
@@ -38,7 +37,7 @@ trait AiStrategy {
         player_idx: usize,
     ) -> Option<Vec<(usize, Card)>>; //Always will return cards to attack with or an error.
 
-    fn make_multi_attack_move(&self, game_state: &GameState, player_idx: usize) -> Vec<usize> {
+    fn make_multi_attack_move(&self, _game_state: &GameState, _player_idx: usize) -> Vec<usize> {
         // Default implementation returns empty vec - no multi-attack by default
         Vec::new()
     }

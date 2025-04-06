@@ -124,13 +124,16 @@ To enable debug logging:
 DURAK_DEBUG_FILE=durak_debug.log cargo run
 ```
 
-## Future Improvements for MVP
+## Future Improvements for MVP, in-order
+
+- Show case winner on the game over screen.
+
+- "Card Passing" Rule. If a player attacks cards with same rank, they pass the attack to the next player. 
 
 - AI difficult level selection on main menu. 
     - Multi card attacks.
     - Better Defensive strategies. 
-- Show case winner on the game over screen.
-- "Card Passing" Rule. If a player attacks cards with same rank, they pass the attack to the next player. 
+
 
 
 

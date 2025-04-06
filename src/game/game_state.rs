@@ -99,17 +99,15 @@ impl GameState {
     }
 
     pub fn attack(&mut self, card_idx: usize, player_idx: usize) -> Result<(), &'static str> {
-        // General attack logic.
+        // General attack logic
         let attacker = &mut self.players[player_idx];
         if let Some(card) = attacker.remove_card(card_idx) {
             self.table_cards.push((card, None));
             // Transition to Defense phase after successful attack
             self.game_phase = GamePhase::Defense;
-            
             // Set the attacker and defender roles properly
             self.current_attacker = player_idx;
             self.current_defender = (player_idx + 1) % self.players.len();
-            
             return Ok(());
         }
         Err("Invalid card index")
@@ -172,10 +170,13 @@ impl GameState {
         });
 
         // Check if all attacks are defended
-        let all_defended = !self.table_cards.iter().any(|(_, defense)| defense.is_none());
+        let all_defended = !self
+            .table_cards
+            .iter()
+            .any(|(_, defense)| defense.is_none());
         if all_defended {
             // All attacks successfully defended
-            
+
             // Move cards from table to discard pile
             let mut cards_to_discard = Vec::new();
             for (attack, defense) in std::mem::take(&mut self.table_cards) {
@@ -185,13 +186,13 @@ impl GameState {
                 }
             }
             self.discard_pile.extend(cards_to_discard);
-            
+
             // Successful defense - swap attacker and defender roles
             // After successful defense, defender becomes new attacker
             let old_defender = self.current_defender;
             self.current_attacker = old_defender;
             self.current_defender = (old_defender + 1) % self.players.len();
-            
+
             // Move to drawing phase
             self.game_phase = GamePhase::Drawing;
         }

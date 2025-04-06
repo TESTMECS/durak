@@ -395,7 +395,7 @@ impl App {
                 debug(format!("AI defending with cards: {:?}", defense_cards));
 
                 // Process each defense card
-                for (table_idx, card) in &defense_cards {
+                for (_table_idx, card) in &defense_cards {
                     // We need to find the hand index of this card
                     if let Some(hand_idx) = self.find_card_index_in_hand(player_idx, *card) {
                         match self.game_state.defend(hand_idx) {
@@ -584,7 +584,6 @@ impl App {
                         debug(format!("Attack failed: {}", e));
                         return;
                     }
-
                     // If successful attack, game will transition to Defense phase
                     // Process AI's turn if they are the defender
                     self.process_ai_turn();
