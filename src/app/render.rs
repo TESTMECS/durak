@@ -19,11 +19,16 @@ pub fn render_ui(app: &App, f: &mut Frame<'_>) {
                 .alignment(ratatui::layout::Alignment::Center)
                 .block(Block::default().borders(Borders::ALL));
 
+            let difficulty_text = format!("Current AI Difficulty: {}", app.selected_difficulty);
+
             let menu = Paragraph::new(vec![
                 Line::from("Press 's' to start a new game"),
+                Line::from("Press 'a' to change AI difficulty"),
                 Line::from("Press 'r' to view game rules"),
                 Line::from("Press 'q' to quit"),
                 Line::from("Press 'd' to toggle debug overlay"),
+                Line::from(""),
+                Line::from(difficulty_text),
             ])
             .style(Style::default().fg(Color::White))
             .alignment(ratatui::layout::Alignment::Center);
@@ -33,7 +38,41 @@ pub fn render_ui(app: &App, f: &mut Frame<'_>) {
                 .constraints([
                     Constraint::Percentage(40),
                     Constraint::Length(3),
-                    Constraint::Length(5),
+                    Constraint::Length(8),
+                    Constraint::Percentage(40),
+                ])
+                .split(area);
+
+            f.render_widget(title, layout[1]);
+            f.render_widget(menu, layout[2]);
+        }
+        AppState::DifficultySelect => {
+            // Render difficulty selection screen
+            let title = Paragraph::new("Select AI Difficulty")
+                .style(Style::default().fg(Color::Green))
+                .alignment(ratatui::layout::Alignment::Center)
+                .block(Block::default().borders(Borders::ALL));
+
+            let current_difficulty = format!("Current: {}", app.selected_difficulty);
+
+            let menu = Paragraph::new(vec![
+                Line::from("Press '1' for Easy AI"),
+                Line::from("Press '2' for Medium AI"),
+                Line::from("Press '3' for Hard AI"),
+                Line::from(""),
+                Line::from(current_difficulty),
+                Line::from(""),
+                Line::from("Press 'b' to go back to main menu"),
+            ])
+            .style(Style::default().fg(Color::White))
+            .alignment(ratatui::layout::Alignment::Center);
+
+            let layout = Layout::default()
+                .direction(Direction::Vertical)
+                .constraints([
+                    Constraint::Percentage(40),
+                    Constraint::Length(3),
+                    Constraint::Length(8),
                     Constraint::Percentage(40),
                 ])
                 .split(area);
@@ -110,35 +149,35 @@ pub fn render_ui(app: &App, f: &mut Frame<'_>) {
             } else {
                 "Game Over!".to_string()
             };
-            
+
             // Layout for the game over screen
             let layout = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([
                     Constraint::Percentage(30),
-                    Constraint::Length(3),  // Title
-                    Constraint::Length(3),  // Winner message
-                    Constraint::Length(3),  // Instructions
+                    Constraint::Length(3), // Title
+                    Constraint::Length(3), // Winner message
+                    Constraint::Length(3), // Instructions
                     Constraint::Percentage(30),
                 ])
                 .split(area);
-            
+
             // Game over title
             let title = Paragraph::new("Game Over")
                 .style(Style::default().fg(Color::Green))
                 .alignment(ratatui::layout::Alignment::Center)
                 .block(Block::default().borders(Borders::ALL));
-            
+
             // Winner message
             let winner_text = Paragraph::new(winner_message)
                 .style(Style::default().fg(Color::Yellow))
                 .alignment(ratatui::layout::Alignment::Center);
-                
+
             // Instructions
             let instructions = Paragraph::new("Press 'N' for new game | Press 'Q' to quit")
                 .style(Style::default().fg(Color::White))
                 .alignment(ratatui::layout::Alignment::Center);
-            
+
             // Render all components
             f.render_widget(title, layout[1]);
             f.render_widget(winner_text, layout[2]);

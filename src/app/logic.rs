@@ -34,6 +34,7 @@ pub struct App {
     pub should_quit: bool,
     pub show_debug: bool,
     pub multiple_selection_mode: bool,
+    pub selected_difficulty: AiDifficulty,
 }
 
 impl App {
@@ -47,7 +48,7 @@ impl App {
         info("Adding computer player");
         game_state.add_player("Computer".to_string(), PlayerType::Computer);
         let ai_difficulty = AiDifficulty::Medium;
-        info(format!("Setting AI difficulty to: {}", ai_difficulty));
+        info(format!("Setting initial AI difficulty to: {}", ai_difficulty));
 
         Self {
             game_state,
@@ -58,6 +59,7 @@ impl App {
             should_quit: false,
             show_debug: false,
             multiple_selection_mode: false,
+            selected_difficulty: AiDifficulty::Medium,
         }
     }
 
@@ -74,6 +76,16 @@ impl App {
     }
 
     pub fn return_to_menu(&mut self) {
+        self.app_state = AppState::MainMenu;
+    }
+    
+    pub fn show_difficulty_select(&mut self) {
+        self.app_state = AppState::DifficultySelect;
+    }
+    
+    pub fn select_difficulty(&mut self, difficulty: AiDifficulty) {
+        self.selected_difficulty = difficulty;
+        info(format!("AI difficulty changed to: {}", difficulty));
         self.app_state = AppState::MainMenu;
     }
 
@@ -523,6 +535,10 @@ impl App {
             AppAction::Quit => self.quit(),
             AppAction::ToggleDebug => self.toggle_debug(),
             AppAction::ShowRules => self.show_rules(),
+            AppAction::ShowDifficultySelect => self.show_difficulty_select(),
+            AppAction::SelectEasyDifficulty => self.select_difficulty(AiDifficulty::Easy),
+            AppAction::SelectMediumDifficulty => self.select_difficulty(AiDifficulty::Medium),
+            AppAction::SelectHardDifficulty => self.select_difficulty(AiDifficulty::Hard),
             AppAction::ReturnToMenu => self.return_to_menu(),
             AppAction::SelectNextCard => self.select_next_card(),
             AppAction::SelectPrevCard => self.select_prev_card(),
@@ -550,6 +566,23 @@ impl App {
         self.selected_card_idx = None;
         self.selected_cards.clear();
         self.multiple_selection_mode = false;
+        
+        // Create a new AI player with the selected difficulty
+        self.ai_player = AiPlayer::new(self.selected_difficulty);
+        debug(format!("Starting game with AI difficulty: {}", self.selected_difficulty));
+
+        // Log the AI difficulty level characteristics
+        match self.selected_difficulty {
+            AiDifficulty::Easy => {
+                debug("Easy AI: Will play lowest cards, often take cards instead of defending");
+            },
+            AiDifficulty::Medium => {
+                debug("Medium AI: Will use basic strategy, manage trumps, and sometimes pass cards");
+            },
+            AiDifficulty::Hard => {
+                debug("Hard AI: Will strategically track cards, exploit weaknesses, and plan ahead");
+            }
+        }
 
         debug("Game started!");
 

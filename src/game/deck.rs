@@ -58,6 +58,11 @@ impl Deck {
     pub fn remaining(&self) -> usize {
         self.cards.len()
     }
+    
+    // Alias for remaining() to match AI implementation naming
+    pub fn size(&self) -> usize {
+        self.cards.len()
+    }
 
     #[allow(dead_code)]
     pub fn bottom_card(&self) -> Option<&Card> {

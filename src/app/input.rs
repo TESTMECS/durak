@@ -10,6 +10,10 @@ pub enum AppAction {
     // Main Menu Actions
     StartGame,
     ShowRules,
+    ShowDifficultySelect,
+    SelectEasyDifficulty,
+    SelectMediumDifficulty,
+    SelectHardDifficulty,
     // Rules Page Actions
     ReturnToMenu,
     // Playing Actions
@@ -34,7 +38,6 @@ pub fn handle_key_input(
     // Handle global keys first
     match key {
         KeyCode::Char('q') | KeyCode::Char('Q') => return Some(AppAction::Quit),
-        KeyCode::Char('d') | KeyCode::Char('D') => return Some(AppAction::ToggleDebug),
         _ => {}
     }
 
@@ -42,6 +45,15 @@ pub fn handle_key_input(
         AppState::MainMenu => match key {
             KeyCode::Char('s') | KeyCode::Char('S') => Some(AppAction::StartGame),
             KeyCode::Char('r') | KeyCode::Char('R') => Some(AppAction::ShowRules),
+            KeyCode::Char('a') | KeyCode::Char('A') => Some(AppAction::ShowDifficultySelect),
+            KeyCode::Char('d') | KeyCode::Char('D') => Some(AppAction::ToggleDebug),
+            _ => None,
+        },
+        AppState::DifficultySelect => match key {
+            KeyCode::Char('1') => Some(AppAction::SelectEasyDifficulty),
+            KeyCode::Char('2') => Some(AppAction::SelectMediumDifficulty),
+            KeyCode::Char('3') => Some(AppAction::SelectHardDifficulty),
+            KeyCode::Char('b') | KeyCode::Char('B') | KeyCode::Esc => Some(AppAction::ReturnToMenu),
             _ => None,
         },
         AppState::RulesPage => match key {
@@ -83,4 +95,3 @@ pub fn handle_key_input(
         },
     }
 }
-
