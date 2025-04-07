@@ -44,7 +44,7 @@ impl<'a> GameUI<'a> {
             }
             GamePhase::Defense => {
                 let defender = &self.game_state.players()[self.game_state.current_defender()];
-                format!("{}'s turn to defend", defender.name())
+                format!("{}'s turn to defend or pass", defender.name())
             }
             GamePhase::Drawing => "Drawing cards...".to_string(),
             GamePhase::GameOver => {
@@ -114,15 +114,15 @@ impl<'a> GameUI<'a> {
 
             let mut row_view = CardRowView::new(player.hand().to_vec()).select(selected);
             // Add multiple selection if available
-            if let Some(ref selected_cards) = self.multiple_selected {
-                // Dereference selected_cards before cloning to get an owned Vec<usize>
-                row_view = row_view.with_multiple_selection((*selected_cards).clone());
+            if let Some(selected_cards) = self.multiple_selected {
+                // Clone to get an owned Vec<usize>
+                row_view = row_view.with_multiple_selection(selected_cards.clone());
             }
             row_view.render(inner_area, buf);
         } else {
             // For computer players, just show card backs or count
             let card_count = format!("{} cards", player.hand_size());
-            let para = Paragraph::new(card_count).style(Style::default().fg(Color::DarkGray));
+            let para = Paragraph::new(card_count).style(Style::default().fg(Color::Red));
             para.render(inner_area, buf);
         }
     }
@@ -144,9 +144,10 @@ impl<'a> GameUI<'a> {
 
     fn render_help(&self, area: Rect, buf: &mut Buffer) {
         let current_phase = self.game_state.game_phase();
+        let multiple_selection = self.multiple_selected.is_some();
         let help_text = match current_phase {
-            GamePhase::Attack => format!("←/→: Select card | M: Multi-select mode | Space: Toggle selection | Enter: Play card(s) | P: Pass | q: Quit"),
-            GamePhase::Defense => format!("←/→: Select card | M: Multi-select mode | Space: Toggle selection | Enter: Play card | T: Take cards | q: Quit"),
+            GamePhase::Attack => format!("←/→: Select card | M: Multi-select mode {} | Space: Toggle selection | Enter: Play card(s) | P: Pass | q: Quit", if multiple_selection { "ON" } else { "OFF" }),
+            GamePhase::Defense => format!("←/→: Select card | M: Multi-select mode {} | Space: Toggle selection | Enter: Play card (same rank = pass) | T: Take cards | q: Quit", if multiple_selection { "ON" } else { "OFF" }),
             GamePhase::GameOver => "Q: Quit | N: New game".to_string(),
             GamePhase::Drawing => "Press any key to continue".to_string(),
             _ => "".to_string(),
@@ -159,7 +160,7 @@ impl<'a> GameUI<'a> {
     }
 }
 
-impl<'a> Widget for GameUI<'a> {
+impl Widget for GameUI<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let vertical_layout = Layout::default()
             .direction(Direction::Vertical)

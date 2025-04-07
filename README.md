@@ -16,12 +16,15 @@ Get rid of all your cards. The last player with cards is the "durak" (fool).
 
 ### Gameplay
 1. The attacker plays a card
-2. The defender must beat it with a higher card of the same suit or a trump
-3. If defense is successful, the defender becomes the next attacker
-4. If the defender can't or won't defend, they pick up all cards on the table, and the next player becomes the attacker
-5. After each round, players draw back up to 6 cards (attacker draws first)
-6. Once the deck is empty, players with no cards are out of the game
-7. The last player with cards is the "durak"
+2. The defender must either:
+   - Beat it with a higher card of the same suit or a trump
+   - Pass the attack by playing a card of the same rank (regardless of suit) to the next player
+3. If a pass occurs, the next player must now defend against both cards
+4. If defense is successful, the defender becomes the next attacker
+5. If the defender can't or won't defend, they pick up all cards on the table, and the next player becomes the attacker
+6. After each round, players draw back up to 6 cards (attacker draws first)
+7. Once the deck is empty, players with no cards are out of the game
+8. The last player with cards is the "durak"
 
 ### Multiple Card Attacks
 - Players can attack with multiple cards of the same rank
@@ -124,17 +127,10 @@ To enable debug logging:
 DURAK_DEBUG_FILE=durak_debug.log cargo run
 ```
 
-## Future Improvements for MVP, in-order
-
-- Show case winner on the game over screen.
-
-- "Card Passing" Rule. If a player attacks cards with same rank, they pass the attack to the next player. 
-
-- AI difficult level selection on main menu. 
-    - Multi card attacks.
-    - Better Defensive strategies. 
-
-
+## Bugs
+- [x] `Safe exit` -> if an error occurs, the game will break and the terminal will be broken need to restore it like is done in `main.rs`. But if error occurs the game will break. -- FIXED
+- [x] Multi attack with the last cards in your hand causes an index out of bounds error. Not exactly sure why. (Error in `logic.rs`), should get fixed when I safe exit the game. -- FIXED
+- [x] Logic file needs to be refactored 1k lines is crazy. -- FIXED (Split into app_core.rs, game_actions.rs, ai_handler.rs, and game_loop.rs)
 
 
 ## License

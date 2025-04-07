@@ -106,6 +106,20 @@ impl Card {
         // Default: Higher rank wins
         self.rank > other.rank
     }
+
+    /// Determines if this card can be used to pass an attack in Podkidnoy Durak
+    ///
+    /// A card can pass an attack if it has the same rank as the attacking card
+    /// (regardless of the suit)
+    ///
+    /// # Arguments
+    /// * `other` - The attacking card to check against
+    ///
+    /// # Returns
+    /// `true` if this card can pass the attack, `false` otherwise
+    pub fn can_pass(&self, other: &Card) -> bool {
+        self.rank == other.rank
+    }
 }
 
 impl fmt::Display for Card {

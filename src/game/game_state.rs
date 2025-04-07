@@ -113,6 +113,31 @@ impl GameState {
         Err("Invalid card index")
     }
 
+    // Handle passing an attack to the next player
+    pub fn pass_attack(&mut self, card_idx: usize, _attack_idx: usize) -> Result<(), &'static str> {
+        let defender = &mut self.players[self.current_defender];
+
+        // Remove the card from defender's hand
+        if let Some(card) = defender.remove_card(card_idx) {
+            // Add a new attack card to the table
+            self.table_cards.push((card, None));
+
+            // Swap the roles - the current defender becomes the attacker
+            let old_defender = self.current_defender;
+            self.current_attacker = old_defender;
+
+            // The original attacker becomes the defender
+            self.current_defender = (old_defender + 1) % self.players.len();
+
+            // Stay in Defense phase
+            self.game_phase = GamePhase::Defense;
+
+            return Ok(());
+        }
+
+        Err("Failed to remove card from hand during pass")
+    }
+
     pub fn defend(&mut self, card_idx: usize) -> Result<(), &'static str> {
         // Find the first undefended attack card
         let undefended_idx = self
@@ -128,6 +153,13 @@ impl GameState {
 
             let defense_card = defender.hand()[card_idx];
             let attack_card = self.table_cards[attack_idx].0;
+
+            // First check if this is a pass (podkidnoy variant)
+            // Check for same rank (passing condition)
+            if defense_card.can_pass(&attack_card) {
+                // This is a pass - handle differently from a regular defense
+                return self.pass_attack(card_idx, attack_idx);
+            }
 
             // Check if defense is valid
             let is_valid = if let Some(trump) = self.trump_suit {
@@ -153,12 +185,12 @@ impl GameState {
                     self.table_cards[attack_idx].1 = Some(card);
                     return Ok(());
                 }
-                return Err("Failed to remove card from hand");
+                Err("Failed to remove card from hand")
             } else {
-                return Err("Invalid defense - card cannot beat the attack");
+                Err("Invalid defense - card cannot beat the attack")
             }
         } else {
-            return Err("No undefended attacks to defend against");
+            Err("No undefended attacks to defend against")
         }
     }
 
@@ -316,16 +348,34 @@ impl GameState {
         }
     }
 
-    pub fn check_game_over(&self) -> bool {
+    pub fn check_game_over(&mut self) -> bool {
         if self.deck.is_empty() {
             let mut players_with_cards = 0;
-            for player in self.players.iter() {
+            let mut last_player_with_cards = None;
+
+            // Count players with cards and remember the last one with cards
+            for (idx, player) in self.players.iter().enumerate() {
                 if !player.is_empty_hand() {
                     players_with_cards += 1;
+                    last_player_with_cards = Some(idx);
                 }
             }
+
             // Game ends when only one player (or zero) has cards left
             if players_with_cards <= 1 {
+                // If there's one player with cards, they're the "durak" (loser)
+                // In Durak, the winner is the player who gets rid of cards first
+                if players_with_cards == 1 {
+                    if let Some(loser_idx) = last_player_with_cards {
+                        // In a 2-player game, if player 1 is the loser, then player 0 is the winner
+                        let winner_idx = if loser_idx == 1 { 0 } else { 1 };
+                        self.winner = Some(winner_idx);
+                        self.game_phase = GamePhase::GameOver;
+                    }
+                } else if players_with_cards == 0 {
+                    // Draw or edge case - no real winner in Durak, but let's handle it
+                    self.game_phase = GamePhase::GameOver;
+                }
                 return true;
             }
             false // More than one player has cards
@@ -399,20 +449,6 @@ impl GameState {
         }
 
         state
-    }
-
-    // Set the winner and update game phase
-    #[allow(dead_code)]
-    pub fn set_winner(&mut self, player_idx: usize) {
-        if player_idx < self.players.len() {
-            self.winner = Some(player_idx);
-            self.game_phase = GamePhase::GameOver;
-        } else {
-            //warn!(
-            //    "Attempted to set invalid player index {} as winner",
-            //    player_idx
-            //);
-        }
     }
 
     // Helper method to set the game to defense phase
