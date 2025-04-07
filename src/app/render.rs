@@ -1,4 +1,4 @@
-use crate::app::logic::App; // Import App from the logic module
+use crate::app::App; // Import App from the app module
 use crate::app::state::AppState; // Import AppState
 use crate::ui::debug_overlay::DebugOverlay;
 use crate::ui::game_ui::GameUI;
