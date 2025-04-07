@@ -7,19 +7,23 @@
  * - Game state transitions
  * - AI decision making
  * - Card selection and gameplay mechanics
+ * - Safe error handling with terminal restoration
  *
  * The game flow is event-driven, with each user action triggering appropriate state changes
- * and AI responses when needed.
-*  TODO: Need a safe way to exit the game on error.
+ * and AI responses when needed. Errors are handled with the safe_exit mechanism.
  */
 use super::input::{handle_key_input, AppAction};
 use super::render::render_ui;
 use super::state::AppState;
-use crate::ui::debug_overlay::{debug, info, trace};
+use crate::ui::debug_overlay::{debug, error, info, trace};
+use anyhow::Result;
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
+use crossterm::terminal::{disable_raw_mode, LeaveAlternateScreen};
+use crossterm::ExecutableCommand;
 use ratatui::backend::Backend;
 use ratatui::Terminal;
-use std::io;
+use std::io::{self, stdout};
+use std::process;
 use std::result::Result::{Err, Ok};
 
 use crate::game::card::Card;
@@ -62,8 +66,34 @@ impl App {
         }
     }
 
-    pub fn safe_exit(&mut self) {
+    /// Safely exits the game, restoring terminal state
+    /// This should be called when encountering errors to ensure terminal is restored
+    /// Returns an io::Error if terminal restoration fails
+    pub fn safe_exit(&mut self, error_msg: Option<&str>) -> io::Result<()> {
         self.should_quit = true;
+        
+        if let Some(msg) = error_msg {
+            error(format!("Game error: {}", msg));
+        }
+        
+        // Restore terminal to normal state
+        disable_raw_mode()?;
+        stdout().execute(LeaveAlternateScreen)?;
+        
+        // If there was an error message, print it to stderr
+        if let Some(msg) = error_msg {
+            eprintln!("Error: {}", msg);
+        }
+        
+        Ok(())
+    }
+    
+    /// Safely exits with error message and terminates the process
+    pub fn safe_exit_with_error(&mut self, error_msg: &str) -> ! {
+        if let Err(e) = self.safe_exit(Some(error_msg)) {
+            eprintln!("Failed to restore terminal: {}", e);
+        }
+        process::exit(1);
     }
 
     pub fn toggle_debug(&mut self) {
@@ -71,7 +101,10 @@ impl App {
     }
 
     pub fn quit(&mut self) {
-        self.should_quit = true;
+        // Use safe_exit without error message for normal exit
+        if let Err(e) = self.safe_exit(None) {
+            error(format!("Failed to restore terminal during quit: {}", e));
+        }
     }
 
     pub fn show_rules(&mut self) {
@@ -655,41 +688,50 @@ impl App {
         if self.game_state.players()[current_player_idx].player_type() == &PlayerType::Human {
             match *self.game_state.game_phase() {
                 GamePhase::Attack => {
-                    if let Err(e) = self.handle_attack_phase(current_player_idx) {
-                        debug(format!("Attack failed: {}", e));
-                        return;
+                    match self.handle_attack_phase(current_player_idx) {
+                        Ok(_) => {
+                            // If successful attack, game will transition to Defense phase
+                            // Process AI's turn if they are the defender
+                            self.process_ai_turn();
+                        }
+                        Err(e) => {
+                            debug(format!("Attack failed: {}", e));
+                            // Not a fatal error, just log it and continue
+                            // Only non-fatal game rule errors should reach here
+                        }
                     }
-                    // If successful attack, game will transition to Defense phase
-                    // Process AI's turn if they are the defender
-                    self.process_ai_turn();
                 }
                 GamePhase::Defense => {
-                    if let Err(e) = self.handle_defense_phase(current_player_idx) {
-                        debug(format!("Defense failed: {}", e));
-                        return;
-                    }
-
-                    // After defense, check game state
-                    if *self.game_state.game_phase() == GamePhase::Drawing {
-                        // If drawing phase, proceed with drawing
-                        self.game_state.draw_cards();
-                        // After drawing, process AI's turn if they are next
-                        self.process_ai_turn();
-                    } else if *self.game_state.game_phase() == GamePhase::Defense {
-                        // Check if a different player is now defending (pass occurred)
-                        let current_defender = self.game_state.current_defender();
-                        if current_defender != current_player_idx {
-                            debug("Detected pass - different player now defending");
-
-                            // Check if AI is now the defender
-                            let is_ai_defender = self.game_state.players()[current_defender]
-                                .player_type()
-                                == &PlayerType::Computer;
-
-                            if is_ai_defender {
-                                debug("AI is now defending after pass, processing AI turn");
+                    match self.handle_defense_phase(current_player_idx) {
+                        Ok(_) => {
+                            // After defense, check game state
+                            if *self.game_state.game_phase() == GamePhase::Drawing {
+                                // If drawing phase, proceed with drawing
+                                self.game_state.draw_cards();
+                                // After drawing, process AI's turn if they are next
                                 self.process_ai_turn();
+                            } else if *self.game_state.game_phase() == GamePhase::Defense {
+                                // Check if a different player is now defending (pass occurred)
+                                let current_defender = self.game_state.current_defender();
+                                if current_defender != current_player_idx {
+                                    debug("Detected pass - different player now defending");
+
+                                    // Check if AI is now the defender
+                                    let is_ai_defender = self.game_state.players()[current_defender]
+                                        .player_type()
+                                        == &PlayerType::Computer;
+
+                                    if is_ai_defender {
+                                        debug("AI is now defending after pass, processing AI turn");
+                                        self.process_ai_turn();
+                                    }
+                                }
                             }
+                        }
+                        Err(e) => {
+                            debug(format!("Defense failed: {}", e));
+                            // Not a fatal error, just log it and continue
+                            // Only non-fatal game rule errors should reach here
                         }
                     }
                 }
@@ -980,20 +1022,46 @@ impl App {
     }
 
     fn valid_multi_attack(&self, player_idx: usize) -> bool {
+        // Safety checks
+        if self.selected_cards.is_empty() {
+            return false;
+        }
+        
         let hand = self.game_state.players()[player_idx].hand();
-        let first_rank = hand[self.selected_cards[0]].rank;
-        let sorted_indexes = self.selected_cards.len();
-        let defender_hand_size =
-            self.game_state.players()[self.game_state.current_defender()].hand_size();
-        if sorted_indexes > defender_hand_size {
+        
+        // Check for out of bounds indices
+        if self.selected_cards.iter().any(|&idx| idx >= hand.len()) {
+            error(format!("Out of bounds index in valid_multi_attack: selected cards: {:?}, hand size: {}", 
+                self.selected_cards, hand.len()));
+            return false;
+        }
+        
+        let first_idx = self.selected_cards[0];
+        if first_idx >= hand.len() {
+            error(format!("First card index out of bounds: {}, hand size: {}", first_idx, hand.len()));
+            return false;
+        }
+        
+        let first_rank = hand[first_idx].rank;
+        let cards_count = self.selected_cards.len();
+        
+        // Make sure we don't attack with more cards than the defender has
+        let defender = self.game_state.current_defender();
+        if defender >= self.game_state.players().len() {
+            error(format!("Invalid defender index: {}", defender));
+            return false;
+        }
+        
+        let defender_hand_size = self.game_state.players()[defender].hand_size();
+        if cards_count > defender_hand_size {
             // Make sure we don't attack with more cards than the defender has
             return false;
         }
+        
         // Return false if selected cards don't all have the same rank, true otherwise
-        return self
-            .selected_cards
+        self.selected_cards
             .iter()
-            .all(|&idx| hand[idx].rank == first_rank);
+            .all(|&idx| idx < hand.len() && hand[idx].rank == first_rank)
     }
 
     fn multi_attack(&mut self, player_idx: usize) -> Result<(), String> {
@@ -1004,21 +1072,46 @@ impl App {
         if self.game_state.game_phase() != &GamePhase::Attack {
             return Err("Not in attack phase".to_string());
         }
-        // sort selected cards
-        // Bug occurs here??
+        
+        // Safely clone the selected cards to avoid any potential index issues
+        if self.selected_cards.iter().any(|&idx| idx >= self.game_state.players()[player_idx].hand_size()) {
+            error("Index out of bounds in multi_attack");
+            let err_msg = "Invalid card index";
+            if let Err(e) = self.safe_exit(Some(err_msg)) {
+                error(format!("Failed to restore terminal: {}", e));
+            }
+            return Err(err_msg.to_string());
+        }
+        
+        // Sort selected cards (highest index first to avoid shifting issues)
         let mut sorted_indexes = self.selected_cards.clone();
         sorted_indexes.sort_by(|a, b| b.cmp(a));
+        
         // Get the hand, validate the indexes.
         if !self.valid_multi_attack(player_idx) {
             return Err("Selected cards have different ranks".to_string());
         }
-        for (_, &idx) in sorted_indexes.iter().enumerate() {
+        
+        // Perform the attacks
+        for &idx in sorted_indexes.iter() {
+            // Double-check index bounds before each attack
+            if idx >= self.game_state.players()[player_idx].hand_size() {
+                let err_msg = format!("Card index {} out of bounds (hand size: {})", 
+                    idx, self.game_state.players()[player_idx].hand_size());
+                
+                if let Err(e) = self.safe_exit(Some(&err_msg)) {
+                    error(format!("Failed to restore terminal: {}", e));
+                }
+                return Err(err_msg);
+            }
+            
             match self.game_state.attack(idx, player_idx) {
                 Ok(_) => {}
                 Err(e) => return Err(format!("Multi-attack failed: {}", &e)),
             }
         }
-        return Ok(());
+        
+        Ok(())
     }
 
     pub fn render<B: Backend>(&self, terminal: &mut Terminal<B>) -> io::Result<()> {
@@ -1028,13 +1121,34 @@ impl App {
 
     pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
         while !self.should_quit {
-            self.render(terminal)?;
+            // Handle any render errors
+            if let Err(e) = self.render(terminal) {
+                error(format!("Render error: {}", e));
+                return self.safe_exit(Some(&format!("Render error: {}", e)));
+            }
+            
             // Read user input every 100ms
-            if event::poll(std::time::Duration::from_millis(100))? {
-                if let Event::Key(key) = event::read()? {
-                    if key.kind == KeyEventKind::Press {
-                        self.on_key(key.code);
+            match event::poll(std::time::Duration::from_millis(100)) {
+                Ok(has_event) => {
+                    if has_event {
+                        match event::read() {
+                            Ok(Event::Key(key)) => {
+                                if key.kind == KeyEventKind::Press {
+                                    // Process key input - if critical errors occur they will trigger safe_exit
+                                    self.on_key(key.code);
+                                }
+                            }
+                            Ok(_) => {}, // Other events we ignore
+                            Err(e) => {
+                                error(format!("Event read error: {}", e));
+                                return self.safe_exit(Some(&format!("Event read error: {}", e)));
+                            }
+                        }
                     }
+                }
+                Err(e) => {
+                    error(format!("Event poll error: {}", e));
+                    return self.safe_exit(Some(&format!("Event poll error: {}", e)));
                 }
             }
         }
