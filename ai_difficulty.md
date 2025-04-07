@@ -124,11 +124,9 @@
 * **Adaptive Play:** Adjusts strategy based on whether it's early game (drawing cards) or endgame (no drawing).
 
 ---
-
 **Implementation Notes:**
 
 * **State Representation:** The AI needs access to its hand, the trump suit, the cards currently on the table (attack/defense), the number of cards in the deck, the number of cards in the opponent's hand, and (for Hard) a list/set of discarded cards.
 * **Card Representation:** Cards need suit and rank, and a way to know if they are trump.
 * **Variations:** If implementing rules like "passing the attack," the logic needs to incorporate that decision point.
 
-This framework provides a clear progression in complexity. The Easy AI is simple and reactive, Medium adds basic heuristics, and Hard requires significant information tracking and strategic planning. Good luck with your implementation!

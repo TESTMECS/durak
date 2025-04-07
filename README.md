@@ -5,6 +5,7 @@ A terminal-based implementation of the popular Russian card game Durak, built wi
 ## Game Rules
 
 Durak is a card game played with 2-6 players using a 36-card deck (cards 6 through Ace).
+[Wikipedia](https://en.wikipedia.org/wiki/Durak)
 
 ### Objective
 Get rid of all your cards. The last player with cards is the "durak" (fool).

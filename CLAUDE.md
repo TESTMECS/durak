@@ -1,4 +1,5 @@
 # CLAUDE.md - Durak Game Dev Guide
+- This game was boostrapped and created with Claude Code
 
 ## Build & Run Commands
 - Build: `cargo build`
