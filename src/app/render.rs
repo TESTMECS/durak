@@ -1,5 +1,5 @@
-use crate::app::App; // Import App from the app module
 use crate::app::state::AppState; // Import AppState
+use crate::app::App; // Import App from the app module
 use crate::ui::debug_overlay::DebugOverlay;
 use crate::ui::game_ui::GameUI;
 use ratatui::layout::{Constraint, Direction, Layout};

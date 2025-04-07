@@ -114,9 +114,9 @@ impl<'a> GameUI<'a> {
 
             let mut row_view = CardRowView::new(player.hand().to_vec()).select(selected);
             // Add multiple selection if available
-            if let Some(ref selected_cards) = self.multiple_selected {
-                // Dereference selected_cards before cloning to get an owned Vec<usize>
-                row_view = row_view.with_multiple_selection((*selected_cards).clone());
+            if let Some(selected_cards) = self.multiple_selected {
+                // Clone to get an owned Vec<usize>
+                row_view = row_view.with_multiple_selection(selected_cards.clone());
             }
             row_view.render(inner_area, buf);
         } else {
@@ -160,7 +160,7 @@ impl<'a> GameUI<'a> {
     }
 }
 
-impl<'a> Widget for GameUI<'a> {
+impl Widget for GameUI<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let vertical_layout = Layout::default()
             .direction(Direction::Vertical)

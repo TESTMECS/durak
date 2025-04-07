@@ -52,7 +52,7 @@ pub fn info<S: AsRef<str>>(message: S) {
     let message_ref = message.as_ref();
     log_message(message_ref, LogLevel::Info);
 }
-
+#[allow(dead_code)]
 pub fn warn<S: AsRef<str>>(message: S) {
     let message_ref = message.as_ref();
     log_message(message_ref, LogLevel::Warn);

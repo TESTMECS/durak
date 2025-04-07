@@ -185,12 +185,12 @@ impl GameState {
                     self.table_cards[attack_idx].1 = Some(card);
                     return Ok(());
                 }
-                return Err("Failed to remove card from hand");
+                Err("Failed to remove card from hand")
             } else {
-                return Err("Invalid defense - card cannot beat the attack");
+                Err("Invalid defense - card cannot beat the attack")
             }
         } else {
-            return Err("No undefended attacks to defend against");
+            Err("No undefended attacks to defend against")
         }
     }
 

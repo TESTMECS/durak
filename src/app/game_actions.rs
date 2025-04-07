@@ -134,9 +134,9 @@ impl App {
                                     debug("Detected pass - different player now defending");
 
                                     // Check if AI is now the defender
-                                    let is_ai_defender = self.game_state.players()[current_defender]
-                                        .player_type()
-                                        == &PlayerType::Computer;
+                                    let is_ai_defender =
+                                        self.game_state.players()[current_defender].player_type()
+                                            == &PlayerType::Computer;
 
                                     if is_ai_defender {
                                         debug("AI is now defending after pass, processing AI turn");
@@ -201,7 +201,8 @@ impl App {
 
             if *self.game_state.game_phase() == GamePhase::Drawing {
                 debug("Drawing phase stuck, forcing Attack");
-                self.game_state = crate::game::GameState::force_attack_phase(self.game_state.clone());
+                self.game_state =
+                    crate::game::GameState::force_attack_phase(self.game_state.clone());
             }
 
             // Check game over - this also sets the winner
@@ -305,9 +306,10 @@ impl App {
                                 self.game_state.discard_cards(cards_to_discard);
 
                                 debug("All attacks defended!");
-                                return Ok(());
+                                Ok(())
+                            } else {
+                                Ok(())
                             }
-                            return Ok(());
                         } else {
                             Err("Invalid defense".to_string())
                         }
@@ -441,38 +443,45 @@ impl App {
         if self.selected_cards.is_empty() {
             return false;
         }
-        
+
         let hand = self.game_state.players()[player_idx].hand();
-        
+
         // Check for out of bounds indices
         if self.selected_cards.iter().any(|&idx| idx >= hand.len()) {
-            error(format!("Out of bounds index in valid_multi_attack: selected cards: {:?}, hand size: {}", 
-                self.selected_cards, hand.len()));
+            error(format!(
+                "Out of bounds index in valid_multi_attack: selected cards: {:?}, hand size: {}",
+                self.selected_cards,
+                hand.len()
+            ));
             return false;
         }
-        
+
         let first_idx = self.selected_cards[0];
         if first_idx >= hand.len() {
-            error(format!("First card index out of bounds: {}, hand size: {}", first_idx, hand.len()));
+            error(format!(
+                "First card index out of bounds: {}, hand size: {}",
+                first_idx,
+                hand.len()
+            ));
             return false;
         }
-        
+
         let first_rank = hand[first_idx].rank;
         let cards_count = self.selected_cards.len();
-        
+
         // Make sure we don't attack with more cards than the defender has
         let defender = self.game_state.current_defender();
         if defender >= self.game_state.players().len() {
             error(format!("Invalid defender index: {}", defender));
             return false;
         }
-        
+
         let defender_hand_size = self.game_state.players()[defender].hand_size();
         if cards_count > defender_hand_size {
             // Make sure we don't attack with more cards than the defender has
             return false;
         }
-        
+
         // Return false if selected cards don't all have the same rank, true otherwise
         self.selected_cards
             .iter()
@@ -487,9 +496,13 @@ impl App {
         if self.game_state.game_phase() != &GamePhase::Attack {
             return Err("Not in attack phase".to_string());
         }
-        
+
         // Safely clone the selected cards to avoid any potential index issues
-        if self.selected_cards.iter().any(|&idx| idx >= self.game_state.players()[player_idx].hand_size()) {
+        if self
+            .selected_cards
+            .iter()
+            .any(|&idx| idx >= self.game_state.players()[player_idx].hand_size())
+        {
             error("Index out of bounds in multi_attack");
             let err_msg = "Invalid card index";
             if let Err(e) = self.safe_exit(Some(err_msg)) {
@@ -497,35 +510,38 @@ impl App {
             }
             return Err(err_msg.to_string());
         }
-        
+
         // Sort selected cards (highest index first to avoid shifting issues)
         let mut sorted_indexes = self.selected_cards.clone();
         sorted_indexes.sort_by(|a, b| b.cmp(a));
-        
+
         // Get the hand, validate the indexes.
         if !self.valid_multi_attack(player_idx) {
             return Err("Selected cards have different ranks".to_string());
         }
-        
+
         // Perform the attacks
         for &idx in sorted_indexes.iter() {
             // Double-check index bounds before each attack
             if idx >= self.game_state.players()[player_idx].hand_size() {
-                let err_msg = format!("Card index {} out of bounds (hand size: {})", 
-                    idx, self.game_state.players()[player_idx].hand_size());
-                
+                let err_msg = format!(
+                    "Card index {} out of bounds (hand size: {})",
+                    idx,
+                    self.game_state.players()[player_idx].hand_size()
+                );
+
                 if let Err(e) = self.safe_exit(Some(&err_msg)) {
                     error(format!("Failed to restore terminal: {}", e));
                 }
                 return Err(err_msg);
             }
-            
+
             match self.game_state.attack(idx, player_idx) {
                 Ok(_) => {}
                 Err(e) => return Err(format!("Multi-attack failed: {}", &e)),
             }
         }
-        
+
         Ok(())
     }
 

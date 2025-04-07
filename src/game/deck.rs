@@ -58,7 +58,7 @@ impl Deck {
     pub fn remaining(&self) -> usize {
         self.cards.len()
     }
-    
+
     // Alias for remaining() to match AI implementation naming
     pub fn size(&self) -> usize {
         self.cards.len()
@@ -69,4 +69,3 @@ impl Deck {
         self.cards.last()
     }
 }
-

@@ -24,8 +24,8 @@ fn main() -> Result<()> {
     // Create app and run it
     let mut app = App::new();
     let res = app.run(&mut terminal);
-    
-    // At this point, safe_exit should have restored the terminal if 
+
+    // At this point, safe_exit should have restored the terminal if
     // an error occurred within the app.run function.
     // We only need to restore for cases where safe_exit wasn't called
     if res.is_ok() {
@@ -39,7 +39,7 @@ fn main() -> Result<()> {
         let _ = disable_raw_mode();
         let _ = terminal.backend_mut().execute(LeaveAlternateScreen);
         let _ = terminal.show_cursor();
-        
+
         // Print the error
         eprintln!("Error: {:?}", err);
         return Err(err.into());

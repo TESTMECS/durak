@@ -106,7 +106,7 @@ impl Card {
         // Default: Higher rank wins
         self.rank > other.rank
     }
-    
+
     /// Determines if this card can be used to pass an attack in Podkidnoy Durak
     ///
     /// A card can pass an attack if it has the same rank as the attacking card

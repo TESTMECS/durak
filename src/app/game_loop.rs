@@ -35,9 +35,15 @@ impl App {
             AppAction::ToggleDebug => self.toggle_debug(),
             AppAction::ShowRules => self.show_rules(),
             AppAction::ShowDifficultySelect => self.show_difficulty_select(),
-            AppAction::SelectEasyDifficulty => self.select_difficulty(crate::game::AiDifficulty::Easy),
-            AppAction::SelectMediumDifficulty => self.select_difficulty(crate::game::AiDifficulty::Medium),
-            AppAction::SelectHardDifficulty => self.select_difficulty(crate::game::AiDifficulty::Hard),
+            AppAction::SelectEasyDifficulty => {
+                self.select_difficulty(crate::game::AiDifficulty::Easy)
+            }
+            AppAction::SelectMediumDifficulty => {
+                self.select_difficulty(crate::game::AiDifficulty::Medium)
+            }
+            AppAction::SelectHardDifficulty => {
+                self.select_difficulty(crate::game::AiDifficulty::Hard)
+            }
             AppAction::ReturnToMenu => self.return_to_menu(),
             AppAction::SelectNextCard => self.select_next_card(),
             AppAction::SelectPrevCard => self.select_prev_card(),
@@ -66,7 +72,7 @@ impl App {
                 error(format!("Render error: {}", e));
                 return self.safe_exit(Some(&format!("Render error: {}", e)));
             }
-            
+
             // Read user input every 100ms
             match event::poll(std::time::Duration::from_millis(100)) {
                 Ok(has_event) => {
@@ -78,7 +84,7 @@ impl App {
                                     self.on_key(key.code);
                                 }
                             }
-                            Ok(_) => {}, // Other events we ignore
+                            Ok(_) => {} // Other events we ignore
                             Err(e) => {
                                 error(format!("Event read error: {}", e));
                                 return self.safe_exit(Some(&format!("Event read error: {}", e)));

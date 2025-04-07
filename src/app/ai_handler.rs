@@ -29,8 +29,8 @@ pub fn process_ai_turn(app: &mut App) {
         let current_player_idx = app.current_player_index();
 
         // Check if it's AI's turn
-        let is_ai_turn = app.game_state.players()[current_player_idx].player_type()
-            == &PlayerType::Computer;
+        let is_ai_turn =
+            app.game_state.players()[current_player_idx].player_type() == &PlayerType::Computer;
 
         if !is_ai_turn {
             debug("Not AI's turn, ending AI processing");
@@ -61,9 +61,8 @@ pub fn process_ai_turn(app: &mut App) {
                 if *app.game_state.game_phase() == GamePhase::Defense {
                     // We're now in defense phase
                     let defender_idx = app.game_state.current_defender();
-                    let is_human_defender = app.game_state.players()[defender_idx]
-                        .player_type()
-                        == &PlayerType::Human;
+                    let is_human_defender =
+                        app.game_state.players()[defender_idx].player_type() == &PlayerType::Human;
 
                     if is_human_defender {
                         debug("Human needs to defend, ending AI processing");
@@ -90,8 +89,7 @@ pub fn process_ai_turn(app: &mut App) {
                 if *app.game_state.game_phase() == GamePhase::Defense {
                     // Check if the AI is still the defender
                     let current_defender = app.game_state.current_defender();
-                    let is_ai_defender = app.game_state.players()[current_defender]
-                        .player_type()
+                    let is_ai_defender = app.game_state.players()[current_defender].player_type()
                         == &PlayerType::Computer;
 
                     // Different defender means a pass occurred
@@ -126,17 +124,14 @@ pub fn process_ai_turn(app: &mut App) {
                 // After drawing, check the new phase and player
                 if *app.game_state.game_phase() == GamePhase::Attack {
                     let attacker_idx = app.game_state.current_attacker();
-                    let is_human_attacker = app.game_state.players()[attacker_idx]
-                        .player_type()
-                        == &PlayerType::Human;
+                    let is_human_attacker =
+                        app.game_state.players()[attacker_idx].player_type() == &PlayerType::Human;
 
                     if is_human_attacker {
                         debug("Human's turn after drawing, ending AI processing");
                         return;
                     } else {
-                        debug(
-                            "AI's turn to attack after drawing, continuing to next iteration",
-                        );
+                        debug("AI's turn to attack after drawing, continuing to next iteration");
                         continue; // Process the attack in the next iteration
                     }
                 }
@@ -210,9 +205,7 @@ fn handle_ai_attack(app: &mut App, player_idx: usize) -> Result<(), String> {
     }
 
     // Get attack moves from AI
-    let attack_cards = app
-        .ai_player
-        .make_attack_move(&app.game_state, player_idx);
+    let attack_cards = app.ai_player.make_attack_move(&app.game_state, player_idx);
 
     if let Some(cards) = attack_cards {
         if cards.is_empty() {
@@ -247,9 +240,7 @@ fn handle_ai_attack(app: &mut App, player_idx: usize) -> Result<(), String> {
 
             // Verify we've transitioned to defense phase
             if *app.game_state.game_phase() != GamePhase::Defense {
-                debug(
-                    "Warning: Game did not transition to Defense phase after successful attack",
-                );
+                debug("Warning: Game did not transition to Defense phase after successful attack");
                 let defender_idx = (player_idx + 1) % app.game_state.players().len();
                 app.game_state
                     .set_phase_to_defense(player_idx, defender_idx);
@@ -283,10 +274,7 @@ fn handle_ai_defense(app: &mut App, player_idx: usize) -> Result<(), String> {
     }
 
     // Check if AI should take cards instead of defending
-    if app
-        .ai_player
-        .should_take_cards(&app.game_state, player_idx)
-    {
+    if app.ai_player.should_take_cards(&app.game_state, player_idx) {
         debug("AI decided to take cards");
         if let Err(e) = app.game_state.take_cards() {
             return Err(e.to_string());
@@ -318,10 +306,7 @@ fn handle_ai_defense(app: &mut App, player_idx: usize) -> Result<(), String> {
             .iter()
             .any(|(_, d)| d.is_none())
     {
-        if let Some(defense_cards) = app
-            .ai_player
-            .make_defense_move(&app.game_state, player_idx)
-        {
+        if let Some(defense_cards) = app.ai_player.make_defense_move(&app.game_state, player_idx) {
             debug(format!("AI defending with cards: {:?}", defense_cards));
 
             // Process each defense card

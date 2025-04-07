@@ -12,7 +12,6 @@ use crossterm::ExecutableCommand;
 use ratatui::backend::Backend;
 use ratatui::Terminal;
 use std::io::{self, stdout};
-use std::process;
 
 use crate::game::{AiDifficulty, AiPlayer, GamePhase, GameState, PlayerType};
 
@@ -58,29 +57,17 @@ impl App {
     /// Returns an io::Error if terminal restoration fails
     pub fn safe_exit(&mut self, error_msg: Option<&str>) -> io::Result<()> {
         self.should_quit = true;
-        
         if let Some(msg) = error_msg {
             error(format!("Game error: {}", msg));
         }
-        
         // Restore terminal to normal state
         disable_raw_mode()?;
         stdout().execute(LeaveAlternateScreen)?;
-        
         // If there was an error message, print it to stderr
         if let Some(msg) = error_msg {
             eprintln!("Error: {}", msg);
         }
-        
         Ok(())
-    }
-    
-    /// Safely exits with error message and terminates the process
-    pub fn safe_exit_with_error(&mut self, error_msg: &str) -> ! {
-        if let Err(e) = self.safe_exit(Some(error_msg)) {
-            eprintln!("Failed to restore terminal: {}", e);
-        }
-        process::exit(1);
     }
 
     pub fn toggle_debug(&mut self) {

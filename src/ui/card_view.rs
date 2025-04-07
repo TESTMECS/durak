@@ -121,7 +121,7 @@ impl Widget for CardRowView {
             // Card can be selected in two ways:
             // 1. It's the currently selected card (cursor)
             // 2. It's in the multiple selection list
-            let is_cursor_selected = self.selected_idx.map_or(false, |idx| idx == i);
+            let is_cursor_selected = self.selected_idx == Some(i);
             let is_multiple_selected = self
                 .multiple_selected
                 .as_ref()
