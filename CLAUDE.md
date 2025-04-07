@@ -2,10 +2,8 @@
 
 ## Build & Run Commands
 - Build: `cargo build`
-- Run: `cargo run`
 - Release build: `cargo run --release`
 - Debug with logging: `DURAK_DEBUG_FILE=durak_debug.log cargo run`
-- Clippy lint: `cargo clippy`
 - Format: `cargo fmt`
 - Test with Clippy: `cargo clippy`
 
@@ -26,3 +24,5 @@
 - Try to keep code in smaller files around 200 to 300 lines. Files longer than this are ok as long as they are self contained. 
 - Be a minimalist in your thinking. 
 - Only implement features that are well-understood. 
+# IMPORTANT
+- Don't use `cargo run` because it's a terminal application, will break Claude Code instance. For testing use `cargo clippy` and `cargo build`

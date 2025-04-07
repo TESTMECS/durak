@@ -127,18 +127,11 @@ To enable debug logging:
 DURAK_DEBUG_FILE=durak_debug.log cargo run
 ```
 
-## Future Improvements for MVP, in-order
-
-- [x] Show case winner on the game over screen.
-
-- [x] "Card Passing" Rule. Defender can pass an attack by playing a card of the same rank to the next player.
-
-- [x] AI difficult level selection on main menu. 
-    - Multi card attacks.
-    - Better Defensive strategies. 
 ## Bugs
-- `Safe exit` -> if an error occurs, the game will break and the terminal will be broken. 
-- Multi attack with the last cards in your hand causes an index out of bounds error. Not exactly sure why. (Error in `logic.rs`)
+- [x] `Safe exit` -> if an error occurs, the game will break and the terminal will be broken need to restore it like is done in `main.rs`. But if error occurs the game will break. 
+- [x] Multi attack with the last cards in your hand causes an index out of bounds error. Not exactly sure why. (Error in `logic.rs`), should get fixed when 
+I safe exit the game.
+- [x] Logic file needs to be refactored 1k lines is crazy.
 
 
 ## License

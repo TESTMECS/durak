@@ -10,7 +10,7 @@
  *
  * The game flow is event-driven, with each user action triggering appropriate state changes
  * and AI responses when needed.
-*  Need a safe way to exit the game on error.
+*  TODO: Need a safe way to exit the game on error.
  */
 use super::input::{handle_key_input, AppAction};
 use super::render::render_ui;
