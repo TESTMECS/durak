@@ -128,11 +128,8 @@ To enable debug logging:
 DURAK_DEBUG_FILE=durak_debug.log cargo run
 ```
 
-## Bugs
-- [x] `Safe exit` -> if an error occurs, the game will break and the terminal will be broken need to restore it like is done in `main.rs`. But if error occurs the game will break. -- FIXED
-- [x] Multi attack with the last cards in your hand causes an index out of bounds error. Not exactly sure why. (Error in `logic.rs`), should get fixed when I safe exit the game. -- FIXED
-- [x] Logic file needs to be refactored 1k lines is crazy. -- FIXED (Split into app_core.rs, game_actions.rs, ai_handler.rs, and game_loop.rs)
-
+# Todo 
+- Refactor for clean Rust code. 
 
 ## License
 
