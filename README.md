@@ -1,4 +1,4 @@
-# Durak Card Game
+# durak
 
 A terminal-based implementation of the popular Russian card game Durak, built with Rust and [ratatui](https://github.com/ratatui-org/ratatui).
 
