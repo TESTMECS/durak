@@ -27,7 +27,7 @@ fn main() -> Result<()> {
 
     // At this point, safe_exit should have restored the terminal if
     // an error occurred within the app.run function.
-    // We only need to restore for cases where safe_exit wasn't called
+    // Just in case where safe_exit wasn't called we restore the raw input
     if res.is_ok() {
         // Normal exit - restore terminal if needed
         disable_raw_mode()?;

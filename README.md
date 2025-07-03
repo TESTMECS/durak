@@ -55,63 +55,6 @@ Get rid of all your cards. The last player with cards is the "durak" (fool).
 - `N`: New game
 - `Q`: Quit
 
-## Game Flow Chart
-
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│             │     │             │     │             │     │             │
-│  Main Menu  │────►│  Game Setup │────►│Attack Phase │────►│Defense Phase│
-│             │     │             │     │             │     │             │
-└─────────────┘     └─────────────┘     └──────┬──────┘     └──────┬──────┘
-       ▲                                        │                   │
-       │                                        │                   │
-       │                                        │                   │
-       │                                        ▼                   ▼
-       │                                 ┌─────────────┐     ┌─────────────┐
-       │                                 │             │     │             │
-       │                                 │  Pass Turn  │     │  Take Cards │
-       │                                 │             │     │             │
-       │                                 └──────┬──────┘     └──────┬──────┘
-       │                                        │                   │
-       │                                        ▼                   │
-       │                                 ┌─────────────┐            │
-       │                                 │             │            │
-       │                                 │Drawing Phase│◄───────────┘
-       │                                 │             │
-       │                                 └──────┬──────┘
-       │                                        │
-       │                                        │
-       │                                        ▼
-       │                                 ┌─────────────┐
-       │                                 │  Check for  │
-       │                                 │   Winner    │──┐
-       │                                 │             │  │
-       │                                 └─────────────┘  │
-       │                                                  │
-       │                                                  ▼
-       │                                           ┌─────────────┐
-       │                                           │             │
-       └───────────────────────────────────────────┤  Game Over  │
-                                                   │             │
-                                                   └─────────────┘
-```
-
-## Building and Running
-
-1. Install Rust: https://www.rust-lang.org/tools/install
-2. Clone this repository
-3. Run the game:
-
-```bash
-cargo run
-```
-
-For better performance, use the release build:
-
-```bash
-cargo run --release
-```
-
 ## AI Difficulty Levels
 
 The game includes an AI opponent with adjustable difficulty:
@@ -120,17 +63,8 @@ The game includes an AI opponent with adjustable difficulty:
 - **Medium**: Uses better strategy, occasionally attacks with 2 cards
 - **Hard**: Uses advanced strategy, aggressively attacks with multiple cards when possible, and makes smarter defense decisions
 
-## Development
-
-To enable debug logging:
-
-```bash
-DURAK_DEBUG_FILE=durak_debug.log cargo run
-```
-
-# Todo 
-- Refactor for clean Rust code. 
+## Development && Docs. 
+- WIP
 
 ## License
-
-MIT
+GNU GPLv3
