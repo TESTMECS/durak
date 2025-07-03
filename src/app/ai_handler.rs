@@ -59,7 +59,6 @@ pub fn process_ai_turn(app: &mut App) {
 
                 // Check if we successfully transitioned to Defense phase
                 if *app.game_state.game_phase() == GamePhase::Defense {
-                    // We're now in defense phase
                     let defender_idx = app.game_state.current_defender();
                     let is_human_defender =
                         app.game_state.players()[defender_idx].player_type() == &PlayerType::Human;
