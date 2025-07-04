@@ -6,7 +6,7 @@ description = "A terminal-based implementation of the popular Russian card game 
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/TESTMECS/durak"
-keywords = ["game", "terminal", "card", "game", "cards", "rust", "ratatui", "durak"]
+keywords = ["game", "terminal", "rust", "ratatui", "durak"]
 categories = ["command-line-utilities", "games"]
 edition = "2024"
 
