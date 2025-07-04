@@ -15,6 +15,7 @@ use ratatui::Terminal;
 use std::io;
 
 impl App {
+    /// On key input, check if there is an action mapped to the key and process it
     pub fn on_key(&mut self, key: KeyCode) {
         trace(format!(
             "Key: {:?}, State: {:?}, Phase: {:?}",
@@ -28,7 +29,7 @@ impl App {
             trace("No action mapped for key");
         }
     }
-
+    /// Process an action from the user, main logic called here.
     fn process_action(&mut self, action: AppAction) {
         match action {
             AppAction::Quit => self.quit(),
@@ -72,7 +73,6 @@ impl App {
                 error(format!("Render error: {}", e));
                 return self.safe_exit(Some(&format!("Render error: {}", e)));
             }
-
             // Read user input every 100ms
             match event::poll(std::time::Duration::from_millis(100)) {
                 Ok(has_event) => {

@@ -29,16 +29,15 @@ pub struct App {
 }
 
 impl App {
+    /// Main Constructor called by `main.rs`
+    /// Creates a new game state and initalizes the AI/Computer Player and the Human Player state.
     pub fn new() -> Self {
         info("Creating new App instance");
         let mut game_state = GameState::new();
-
         info("Adding human player");
         game_state.add_player("Player".to_string(), PlayerType::Human);
-
         info("Adding computer player");
         game_state.add_player("Computer".to_string(), PlayerType::Computer);
-
         Self {
             game_state,
             app_state: AppState::MainMenu,
@@ -51,7 +50,6 @@ impl App {
             selected_difficulty: AiDifficulty::Medium,
         }
     }
-
     /// Safely exits the game, restoring terminal state
     /// This should be called when encountering errors to ensure terminal is restored
     /// Returns an io::Error if terminal restoration fails
@@ -69,46 +67,49 @@ impl App {
         }
         Ok(())
     }
-
+    /// Show the debug overlay while in game (Press 'd' to toggle)
     pub fn toggle_debug(&mut self) {
         self.show_debug = !self.show_debug;
     }
-
+    /// Quit the game and call `safe_exit`
+    /// Print the error message if terminal restoration fails for debugging purposes.
     pub fn quit(&mut self) {
         // Use safe_exit without error message for normal exit
         if let Err(e) = self.safe_exit(None) {
             error(format!("Failed to restore terminal during quit: {}", e));
         }
     }
-
+    /// Show rules on the main menu page.
     pub fn show_rules(&mut self) {
         self.app_state = AppState::RulesPage;
     }
-
+    /// Backlink to the main menu from the menu pages.
     pub fn return_to_menu(&mut self) {
         self.app_state = AppState::MainMenu;
     }
-
+    /// Show the difficulty select page.
     pub fn show_difficulty_select(&mut self) {
         self.app_state = AppState::DifficultySelect;
     }
-
+    /// Changes the AI difficulty when selected from the difficulty select page.
+    /// Return to the main menu afterwards.
     pub fn select_difficulty(&mut self, difficulty: AiDifficulty) {
         self.selected_difficulty = difficulty;
         self.ai_player = AiPlayer::new(difficulty);
         info(format!("AI difficulty changed to: {}", difficulty));
         self.app_state = AppState::MainMenu;
     }
-
+    /// Toggles the multiple selection mode for the player.
+    /// When enabled, the player can select multiple cards of the same rank.
+    /// Should update the Controls UI with "ON"
     pub fn toggle_multiple_selection(&mut self) {
         self.multiple_selection_mode = !self.multiple_selection_mode;
         if !self.multiple_selection_mode {
             self.selected_card_idx = None;
         }
     }
-
+    /// Toggles the selection of card in the player's hand by adding it to the `selected_cards` list.
     pub fn toggle_card_selection(&mut self, card_idx: usize) {
-        // adds to the players attacking cards. self.selected_cards
         if let Some(pos) = self.selected_cards.iter().position(|&idx| idx == card_idx) {
             self.selected_cards.remove(pos);
             debug(format!("Deselected card at index {}", card_idx));
@@ -117,16 +118,16 @@ impl App {
             debug(format!("Selected card at index {}", card_idx));
         }
     }
-
+    /// Get the current player index based on the game phase.
     pub fn current_player_index(&self) -> usize {
-        // Get the current active player index based on game phase
         match *self.game_state.game_phase() {
             GamePhase::Attack => self.game_state.current_attacker(),
             GamePhase::Defense => self.game_state.current_defender(),
             _ => self.game_state.current_attacker(),
         }
     }
-
+    /// Calls the render UI method
+    /// See `render.rs` for implementation.
     pub fn render<B: Backend>(&self, terminal: &mut Terminal<B>) -> io::Result<()> {
         terminal.draw(|f| render_ui(self, f))?;
         Ok(())

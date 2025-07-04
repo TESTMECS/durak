@@ -20,7 +20,6 @@ impl Display for AiDifficulty {
     }
 }
 
-// Define a strategy trait for AI behavior
 trait AiStrategy {
     fn should_take_cards(&self, game_state: &GameState, player_idx: usize) -> bool;
 
@@ -37,7 +36,6 @@ trait AiStrategy {
     ) -> Option<Vec<(usize, Card)>>; //Always will return cards to attack with or an error.
 }
 
-// Implement strategies for each difficulty level
 struct EasyStrategy;
 struct MediumStrategy;
 struct HardStrategy;
@@ -51,7 +49,6 @@ impl AiStrategy for EasyStrategy {
         let trump_suit = game_state
             .trump_suit()
             .unwrap_or_else(|| panic!("Trump suit should be set"));
-
         // Find the first undefended attack
         for (attack_card, _) in game_state
             .table_cards()
@@ -62,7 +59,6 @@ impl AiStrategy for EasyStrategy {
             let can_defend = hand
                 .iter()
                 .any(|card| card.can_beat(attack_card, trump_suit));
-
             if !can_defend {
                 // If any single card can't be beaten, take all cards
                 debug(format!(
@@ -72,7 +68,6 @@ impl AiStrategy for EasyStrategy {
                 return true;
             }
         }
-
         // If all cards can be beaten, still 50% chance to take cards
         let random_take = rand::random::<f32>() < 0.5;
         if random_take {
@@ -82,10 +77,8 @@ impl AiStrategy for EasyStrategy {
             ));
             return true;
         }
-
         false
     }
-
     /// Easy AI plays the lowest-ranking playable card (non-trump preferred)
     fn make_attack_move(
         &self,
@@ -95,11 +88,9 @@ impl AiStrategy for EasyStrategy {
         let player = &game_state.players()[player_idx];
         let hand = player.hand();
         let trump_suit = game_state.trump_suit();
-
         if hand.is_empty() {
             return None;
         }
-
         // If there are cards on the table, check for cards of matching rank to add
         let table_cards = game_state.table_cards();
         if !table_cards.is_empty() {
@@ -114,7 +105,6 @@ impl AiStrategy for EasyStrategy {
                     ranks
                 })
                 .collect();
-
             // Find any card in hand that matches a rank on the table
             for (idx, card) in hand.iter().enumerate() {
                 if table_ranks.contains(&card.rank) {
@@ -126,12 +116,10 @@ impl AiStrategy for EasyStrategy {
                 }
             }
         }
-
         // For initial attack, find the lowest non-trump card
         let mut lowest_card = None;
         let mut lowest_idx = 0;
         let mut lowest_value = u8::MAX;
-
         for (idx, card) in hand.iter().enumerate() {
             // Calculate card value - non-trumps are lower value than trumps
             let is_trump = trump_suit == Some(card.suit);
@@ -147,16 +135,13 @@ impl AiStrategy for EasyStrategy {
                 lowest_idx = idx;
             }
         }
-
         if let Some(card) = lowest_card {
             debug(format!("Easy AI attacking with lowest card: {}", card));
             return Some(vec![(lowest_idx, card)]);
         }
-
         // Should never reach here if hand is not empty
         Some(vec![(0, hand[0])])
     }
-
     /// Easy AI logic: simply use the lowest possible card that can defend. It doesn't save trumps strategically
     fn make_defense_move(
         &self,
@@ -186,7 +171,6 @@ impl AiStrategy for EasyStrategy {
                 })
                 .map(|(idx, &card)| (idx, card))
                 .collect();
-
             // Use the lowest non-trump if available
             if !non_trump_defenses.is_empty() {
                 if let Some(&(idx, card)) = non_trump_defenses.iter().min_by_key(|(_, c)| c.rank) {
@@ -194,7 +178,6 @@ impl AiStrategy for EasyStrategy {
                     return Some(vec![(idx, card)]);
                 }
             }
-
             // If no non-trump defense, check for any trump that can beat it
             let trump_defenses: Vec<(usize, Card)> = hand
                 .iter()
@@ -207,7 +190,6 @@ impl AiStrategy for EasyStrategy {
                 })
                 .map(|(idx, &card)| (idx, card))
                 .collect();
-
             // Use the lowest trump if available
             if !trump_defenses.is_empty() {
                 if let Some(&(idx, card)) = trump_defenses.iter().min_by_key(|(_, c)| c.rank) {
@@ -216,7 +198,6 @@ impl AiStrategy for EasyStrategy {
                 }
             }
         }
-
         // Cannot defend - will need to take cards
         None
     }
@@ -235,7 +216,6 @@ impl AiStrategy for MediumStrategy {
         let trump_suit = game_state
             .trump_suit()
             .expect("Trump suit required for defense decision");
-
         // Get all undefended attacks
         let undefended_attacks: Vec<&Card> = game_state
             .table_cards()
@@ -243,7 +223,6 @@ impl AiStrategy for MediumStrategy {
             .filter(|(_, defense)| defense.is_none())
             .map(|(attack, _)| attack)
             .collect();
-
         if undefended_attacks.is_empty() {
             return false;
         }
@@ -267,26 +246,20 @@ impl AiStrategy for MediumStrategy {
                 ));
                 return true; // Cannot defend this card, must take all
             }
-
             // Check if defense requires a trump
             let requires_trump = possible_defenses.iter().all(|card| card.suit == trump_suit);
-
             if requires_trump {
                 trump_cards_needed += 1;
-
                 // Check if it requires a high trump (Jack or higher)
                 let requires_high_trump = possible_defenses
                     .iter()
                     .filter(|card| card.suit == trump_suit)
                     .all(|card| card.rank >= Rank::Jack);
-
                 if requires_high_trump {
                     high_trumps_needed += 1;
                 }
             }
         }
-
-        
         if high_trumps_needed > 0 {
             debug(format!(
                 "Medium AI ({}) taking cards to save high trumps",
@@ -294,7 +267,6 @@ impl AiStrategy for MediumStrategy {
             ));
             return true;
         }
-
         if trump_cards_needed >= 2 {
             let random_take = rand::random::<f32>() < 0.4;
             if random_take {
@@ -305,7 +277,6 @@ impl AiStrategy for MediumStrategy {
                 return true;
             }
         }
-
         if undefended_attacks.len() >= 4 {
             debug(format!(
                 "Medium AI ({}) taking cards due to too many attacks ({})",
@@ -314,7 +285,6 @@ impl AiStrategy for MediumStrategy {
             ));
             return true;
         }
-
         debug(format!("Medium AI ({}) will try to defend", player_idx));
         false
     }
@@ -447,12 +417,10 @@ impl AiStrategy for MediumStrategy {
             .enumerate()
             .filter(|(_, card)| trump_suit != Some(card.suit))
             .min_by_key(|(_, card)| card.rank);
-
         if let Some((idx, &card)) = lowest_non_trump {
             debug(format!("Medium AI playing lowest non-trump: {}", card));
             return Some(vec![(idx, card)]);
         }
-
         // If we only have trumps, play the lowest one (if AI has several)
         let trump_cards: Vec<(usize, Card)> = hand
             .iter()
@@ -460,7 +428,6 @@ impl AiStrategy for MediumStrategy {
             .filter(|(_, card)| trump_suit != Some(card.suit))
             .map(|(idx, &card)| (idx, card))
             .collect();
-
         if trump_cards.len() > 1 {
             if let Some((idx, card)) = trump_cards
                 .iter()
@@ -474,17 +441,14 @@ impl AiStrategy for MediumStrategy {
                 return Some(vec![(idx, card)]);
             }
         }
-
         // Last resort - play any card (lowest by rank)
         if let Some((idx, &card)) = hand.iter().enumerate().min_by_key(|(_, c)| c.rank) {
             debug(format!("Medium AI playing lowest card: {}", card));
             return Some(vec![(idx, card)]);
         }
-
         // Should never reach here
         None
     }
-
     /// Medium AI strategy:
     /// 1. If the attack card is high value, might use a trump strategically
     /// 2. Otherwise, prefer non-trump defenses
@@ -498,7 +462,6 @@ impl AiStrategy for MediumStrategy {
         let trump_suit = game_state
             .trump_suit()
             .expect("Trump suit required for defense");
-
         // Find the first undefended attack
         if let Some((attacking_card, _)) = game_state
             .table_cards()
@@ -512,7 +475,6 @@ impl AiStrategy for MediumStrategy {
                 .filter(|(_, card)| card.can_pass(attacking_card))
                 .map(|(idx, &card)| (idx, card))
                 .collect();
-
             if !possible_passes.is_empty() {
                 let pass_chance = rand::random::<f32>();
                 if pass_chance < 0.3 {
@@ -525,7 +487,6 @@ impl AiStrategy for MediumStrategy {
                             card.rank as u8
                         }
                     });
-
                     if let Some(&(hand_idx, pass_card)) = lowest_pass {
                         debug(format!(
                             "Medium AI choosing to PASS with {} (same rank as {})",
@@ -535,7 +496,6 @@ impl AiStrategy for MediumStrategy {
                     }
                 }
             }
-
             // Find all valid defenses
             let valid_defenses: Vec<(usize, Card)> = hand
                 .iter()
@@ -543,31 +503,23 @@ impl AiStrategy for MediumStrategy {
                 .filter(|(_, card)| card.can_beat(attacking_card, trump_suit))
                 .map(|(idx, &card)| (idx, card))
                 .collect();
-
             if valid_defenses.is_empty() {
                 return None; // Cannot defend
             }
-
             // Determine if this is a high-value card that's worth using a trump on
             let is_high_value = attacking_card.rank >= Rank::Jack
                 || (attacking_card.suit == trump_suit && attacking_card.rank >= Rank::Ten);
-
-
-
             if is_high_value {
                 // For high-value attacks, might use a trump (70% chance)
                 let use_trump_strategically = rand::random::<f32>() < 0.7;
-
                 if use_trump_strategically {
                     let trump_defenses: Vec<&(usize, Card)> = valid_defenses
                         .iter()
                         .filter(|(_, card)| card.suit == trump_suit)
                         .collect();
-
                     if !trump_defenses.is_empty() {
                         // Use the lowest trump that can beat it
                         let lowest_trump = trump_defenses.iter().min_by_key(|(_, card)| card.rank);
-
                         if let Some(&&(idx, card)) = lowest_trump {
                             debug(format!(
                                 "Medium AI using trump {} to beat high value card {}",
@@ -578,13 +530,11 @@ impl AiStrategy for MediumStrategy {
                     }
                 }
             }
-
             // Try to find a non-trump defense first
             let non_trump_defenses: Vec<&(usize, Card)> = valid_defenses
                 .iter()
                 .filter(|(_, card)| card.suit != trump_suit)
                 .collect();
-
             if !non_trump_defenses.is_empty() {
                 // Use the lowest non-trump defense
                 if let Some(&&(idx, card)) =
@@ -594,7 +544,6 @@ impl AiStrategy for MediumStrategy {
                     return Some(vec![(idx, card)]);
                 }
             }
-
             // If forced to use a trump, use the lowest one
             if let Some(&(idx, card)) = valid_defenses
                 .iter()
@@ -607,11 +556,9 @@ impl AiStrategy for MediumStrategy {
                 ));
                 return Some(vec![(idx, card)]);
             }
-
             // Should be unreachable if valid_defenses is not empty
             return None;
         }
-
         // No undefended attacks
         None
     }
@@ -628,23 +575,19 @@ impl AiStrategy for HardStrategy {
         let trump_suit = game_state
             .trump_suit()
             .expect("Trump suit required for defense decision");
-
         // Track played cards to better understand the game state
         let table_cards = game_state.table_cards();
         let discard_pile = game_state.discard_pile();
         let deck_empty = game_state.deck().is_empty();
-
         // Find all undefended attacks
         let undefended_attacks: Vec<&Card> = table_cards
             .iter()
             .filter(|(_, defense)| defense.is_none())
             .map(|(attack, _)| attack)
             .collect();
-
         if undefended_attacks.is_empty() {
             return false;
         }
-
         // First check if we are able to defend at all
         for attack_card in &undefended_attacks {
             let defenses = hand
@@ -653,7 +596,6 @@ impl AiStrategy for HardStrategy {
                 .filter(|(_, card)| card.can_beat(attack_card, trump_suit))
                 .map(|(idx, &card)| (idx, card))
                 .collect::<Vec<_>>();
-
             if defenses.is_empty() {
                 debug(format!(
                     "Hard AI ({}) cannot defend against {}, must take",
@@ -662,7 +604,6 @@ impl AiStrategy for HardStrategy {
                 return true; // Cannot defend one of the attacks, must take
             }
         }
-
         // Calculate the cost of defending vs. the benefit of picking up
         // 1. Evaluate defense cost: How many valuable cards would be spent?
         let mut defense_plan: HashMap<usize, Card> = HashMap::new(); // Maps attack index -> defense card
@@ -689,11 +630,9 @@ impl AiStrategy for HardStrategy {
                 .iter()
                 .filter(|(_, card)|card.suit != trump_suit)
                 .min_by_key(|(_, card)| card.rank);
-
             if let Some(&(_idx, card)) = non_trump_defense {
                 // Use this non-trump card
                 defense_plan.insert(attack_idx, card);
-
                 // Count valuable non-trump cards (Jack or higher)
                 if card.rank >= Rank::Jack {
                     valuable_cards_used += 1;
@@ -704,23 +643,18 @@ impl AiStrategy for HardStrategy {
                     .iter()
                     .filter(|(_, card)|card.suit == trump_suit)
                     .min_by_key(|(_, card)| card.rank);
-
                 if let Some(&(_idx, card)) = trump_defense {
                     defense_plan.insert(attack_idx, card);
-
                     // Any trump is valuable, higher trumps are more so
                     valuable_cards_used += 1;
-
                     if card.rank >= Rank::Jack {
                         high_trumps_used += 1;
                     }
                 }
             }
         }
-
         // 2. Endgame considerations
         let is_endgame = deck_empty || game_state.deck().size() <= 2;
-
         // In endgame, conserving high trumps is critical for winning
         if is_endgame && high_trumps_used > 0 {
             // Count how many high trumps might still be unplayed
@@ -728,14 +662,12 @@ impl AiStrategy for HardStrategy {
                 .iter()
                 .filter(|card| card.suit == trump_suit && card.rank >= Rank::Jack)
                 .count();
-
             // If we'd use our last high trump, consider picking up instead
             let holding_last_high_trumps = high_trumps_used
                 >= hand
                     .iter()
                     .filter(|card| card.suit == trump_suit && card.rank >= Rank::Jack)
                     .count();
-
             if holding_last_high_trumps && high_trumps_played < 4 {
                 debug(format!(
                     "Hard AI ({}) preserving last high trumps in endgame",
@@ -744,12 +676,10 @@ impl AiStrategy for HardStrategy {
                 return true;
             }
         }
-
         // 3. Cards to pick up vs hand overload
         let cards_to_take = table_cards.len();
         let new_hand_size = player.hand_size() + cards_to_take;
         let hand_limit = 6; // Standard hand size
-
         // Only take cards if it doesn't overload our hand too much
         if new_hand_size > hand_limit + 2 && valuable_cards_used < 2 {
             debug(format!(
@@ -758,7 +688,6 @@ impl AiStrategy for HardStrategy {
             ));
             return false;
         }
-
         // 4. Opponent hand analysis
         let defender_idx = game_state.current_defender();
         let attacker_idx = game_state.current_attacker();
@@ -769,7 +698,6 @@ impl AiStrategy for HardStrategy {
         };
         let opponent = &game_state.players()[opponent_idx];
         let opponent_card_count = opponent.hand_size();
-
         // If opponent is almost out of cards, defend more aggressively
         if is_endgame && opponent_card_count <= 2 && valuable_cards_used <= 1 {
             debug(format!(
@@ -778,12 +706,10 @@ impl AiStrategy for HardStrategy {
             ));
             return false;
         }
-
         // Final decision balancing all factors
         let strategic_take = (valuable_cards_used >= 2)
             || (high_trumps_used >= 1 && is_endgame)
             || (cards_to_take <= 2 && new_hand_size <= hand_limit);
-
         if strategic_take {
             debug(format!(
                 "Hard AI ({}) strategically taking cards (value cards: {}, high trumps: {})",
@@ -791,14 +717,12 @@ impl AiStrategy for HardStrategy {
             ));
             return true;
         }
-
         debug(format!(
             "Hard AI ({}) decides to defend (cards used: {})",
             player_idx, valuable_cards_used
         ));
         false
     }
-
     /// Hard AI has various strategies for making attacking moves. 
     /// Plan A. If it is late into the game the AI will analyze the player's hand, discard pile, and
     ///    table cards to determine the best attack move. 
@@ -811,19 +735,16 @@ impl AiStrategy for HardStrategy {
         game_state: &GameState,
         player_idx: usize,
     ) -> Option<Vec<(usize, Card)>> {
-
         let player = &game_state.players()[player_idx];
         let hand = player.hand();
         let trump_suit = game_state.trump_suit();
         let deck_empty = game_state.deck().is_empty();
         let discard_pile = game_state.discard_pile();
         let table_cards = game_state.table_cards();
-
         // Get information about the defender
         let defender_idx = game_state.current_defender();
         let defender = &game_state.players()[defender_idx];
         let defender_hand_size = defender.hand_size();
-
         if hand.is_empty() {
             return None;
         }
@@ -840,15 +761,12 @@ impl AiStrategy for HardStrategy {
                     ranks
                 })
                 .collect();
-
             // Track played cards of each rank to guide our attack strategy
             let mut rank_card_count: HashMap<Rank, usize> = HashMap::new();
-
             // Count cards in discard pile by rank
             for card in discard_pile {
                 *rank_card_count.entry(card.rank).or_insert(0) += 1;
             }
-
             // Count cards on table by rank
             for (attack, defense) in table_cards {
                 *rank_card_count.entry(attack.rank).or_insert(0) += 1;
@@ -856,14 +774,11 @@ impl AiStrategy for HardStrategy {
                     *rank_card_count.entry(def.rank).or_insert(0) += 1;
                 }
             }
-
             let defender_used_trump = table_cards.iter().any(|(_, defense)| {
                 matches!((defense, trump_suit), (Some(d), Some(t)) if d.suit == t)
             });
-
             // Find weaknesses in defender's hand
             let mut probable_weak_ranks: Vec<Rank> = Vec::new();
-
             // Ranks where many cards are already out are likely weak points
             for (rank, count) in &rank_card_count {
                 if valid_ranks.contains(rank) && *count >= 2 {
@@ -872,7 +787,6 @@ impl AiStrategy for HardStrategy {
                     probable_weak_ranks.push(*rank);
                 }
             }
-
             // Try adding cards of ranks that are likely weak points for defender
             if !probable_weak_ranks.is_empty() {
                 let matching_cards: Vec<(usize, Card)> = hand
@@ -885,7 +799,6 @@ impl AiStrategy for HardStrategy {
                     )
                     .map(|(idx, &card)| (idx, card))
                     .collect();
-
                 if !matching_cards.is_empty() {
                     // Choose lowest card from weak ranks
                     if let Some(&(idx, card)) = matching_cards.iter().min_by_key(|(_, c)| {
@@ -901,7 +814,6 @@ impl AiStrategy for HardStrategy {
                     }
                 }
             }
-
             // Find any matching cards
             let matching_cards: Vec<(usize, Card)> = hand
                 .iter()
@@ -909,7 +821,6 @@ impl AiStrategy for HardStrategy {
                 .filter(|(_, card)| valid_ranks.contains(&card.rank))
                 .map(|(idx, &card)| (idx, card))
                 .collect();
-
             if !matching_cards.is_empty() {
                 // If defender is struggling (using trumps), consider adding a trump to force more trumps
                 if defender_used_trump {
@@ -917,10 +828,8 @@ impl AiStrategy for HardStrategy {
                         .iter()
                         .filter(|(_, card)| trump_suit == Some(card.suit))
                         .collect();
-
                     // Hard AI will strategically add trumps 70% of the time if defender used trumps
                     let add_trump = !matching_trumps.is_empty() && rand::random::<f32>() < 0.7;
-
                     if add_trump {
                         // Use lowest matching trump
                         if let Some(&&(idx, card)) =
@@ -934,13 +843,11 @@ impl AiStrategy for HardStrategy {
                         }
                     }
                 }
-
                 // Otherwise prefer non-trumps
                 let non_trump_matches: Vec<&(usize, Card)> = matching_cards
                     .iter()
                     .filter(|(_, card)| trump_suit != Some(card.suit))
                     .collect();
-
                 if !non_trump_matches.is_empty() {
                     // Choose the lowest non-trump match
                     if let Some(&&(idx, card)) =
@@ -950,7 +857,6 @@ impl AiStrategy for HardStrategy {
                         return Some(vec![(idx, card)]);
                     }
                 }
-
                 // If no non-trumps, use lowest matching card of any type
                 if let Some(&(idx, card)) = matching_cards.iter().min_by_key(|(_, c)| c.rank) {
                     debug(format!(
@@ -960,14 +866,11 @@ impl AiStrategy for HardStrategy {
                     return Some(vec![(idx, card)]);
                 }
             }
-
             // Hard AI knows when not to add cards - if defender beat earlier attacks easily
             // or if there are already many cards on the table
             let easy_defense = table_cards.iter().all(|(_, defense)| defense.is_some());
-
             if easy_defense || table_cards.len() >= 3 {
                 let stop_chance = if easy_defense { 0.8 } else { 0.5 };
-
                 if rand::random::<f32>() < stop_chance {
                     debug(format!(
                         "Hard AI strategically stops adding cards (easy defense: {})",
@@ -976,7 +879,6 @@ impl AiStrategy for HardStrategy {
                     return Some(vec![]);
                 }
             }
-
             // No good cards to add
             return Some(vec![]);
         }
@@ -996,7 +898,6 @@ impl AiStrategy for HardStrategy {
                     })
                     .map(|(idx, &card)| (idx, card))
                     .collect();
-
                 if !forcing_cards.is_empty() {
                     // Use a threatening card to prevent easy discard
                     if let Some(&(idx, card)) = forcing_cards.iter().min_by_key(|(_, c)| c.rank) {
@@ -1097,7 +998,6 @@ impl AiStrategy for HardStrategy {
         let _table_cards = game_state.table_cards();
         let _discard_pile = game_state.discard_pile();
         let is_endgame = game_state.deck().is_empty();
-
         // Find the first undefended attack
         if let Some((_attack_idx, attack_card)) = game_state
             .table_cards()
@@ -1113,7 +1013,6 @@ impl AiStrategy for HardStrategy {
                 .filter(|(_, card)| card.can_pass(attack_card))
                 .map(|(idx, &card)| (idx, card))
                 .collect();
-
             // Hard AI is aggressive with passing (60% chance if available)
             // but won't pass high trumps or valuable cards
             if !possible_passes.is_empty() {
@@ -1126,7 +1025,6 @@ impl AiStrategy for HardStrategy {
                         card.rank != Rank::Ace)
                     .map(|&(idx, card)| (idx, card))
                     .collect();
-
                 if !safe_passes.is_empty() && rand::random::<f32>() < 0.6 {
                     // Choose the best pass card - prefer non-trumps
                     let best_pass = safe_passes.iter().min_by_key(|(_, card)| {
@@ -1136,7 +1034,6 @@ impl AiStrategy for HardStrategy {
                             card.rank as u8
                         }
                     });
-
                     if let Some(&(hand_idx, pass_card)) = best_pass {
                         debug(format!(
                             "Hard AI strategically passing with {} (same rank as {})",
@@ -1145,7 +1042,6 @@ impl AiStrategy for HardStrategy {
                         return Some(vec![(hand_idx, pass_card)]);
                     }
                 }
-
                 // In emergency (no other defense), pass with anything
                 if !possible_passes.is_empty() && safe_passes.is_empty() {
                     // Find the lowest value pass card
@@ -1160,7 +1056,6 @@ impl AiStrategy for HardStrategy {
                     }
                 }
             }
-
             // Find all cards that can beat this attack
             let valid_defenses: Vec<(usize, Card)> = hand
                 .iter()
@@ -1168,7 +1063,6 @@ impl AiStrategy for HardStrategy {
                 .filter(|(_, card)|card.can_beat(attack_card, trump_suit))
                 .map(|(idx, &card)| (idx, card))
                 .collect();
-
             if valid_defenses.is_empty() {
                 // If we have no defense cards but do have pass cards, force a pass
                 if !possible_passes.is_empty() {
@@ -1179,7 +1073,6 @@ impl AiStrategy for HardStrategy {
                     ));
                     return Some(vec![(hand_idx, pass_card)]);
                 }
-
                 return None; // Can't defend at all
             }
             // Hard AI strategy: Use the absolute lowest card that can beat the attack
@@ -1188,7 +1081,6 @@ impl AiStrategy for HardStrategy {
                 .iter()
                 .filter(|(_, card)|card.suit != trump_suit)
                 .collect();
-
             if !non_trump_defenses.is_empty() {
                 // Use the lowest non-trump that beats it
                 if let Some(&&(hand_idx, card)) =
@@ -1198,19 +1090,16 @@ impl AiStrategy for HardStrategy {
                     return Some(vec![(hand_idx, card)]);
                 }
             }
-
             // If forced to use a trump, use the lowest possible one
             let trump_defenses: Vec<&(usize, Card)> = valid_defenses
                 .iter()
                 .filter(|(_, card)| card.suit == trump_suit)
                 .collect();
-
             if !trump_defenses.is_empty() {
                 // In endgame, think hard about using high trumps
                 if is_endgame {
                     let is_high_value_attack = attack_card.rank >= Rank::Queen
                         || (attack_card.suit == trump_suit && attack_card.rank >= Rank::Ten);
-
                     // Only use high trumps against high-value cards in endgame
                     if !is_high_value_attack {
                         // Find the lowest trump that's not too valuable (less than Jack)

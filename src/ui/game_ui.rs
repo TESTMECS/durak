@@ -1,5 +1,5 @@
+use super::card_view::{CardRowView, TableView};
 use crate::game::{GamePhase, GameState};
-// use crate::ui::debug_overlay::{debug, info, trace};
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
@@ -7,8 +7,6 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Widget},
 };
-
-use super::card_view::{CardRowView, TableView};
 
 pub struct GameUI<'a> {
     game_state: &'a GameState,
@@ -84,24 +82,19 @@ impl<'a> GameUI<'a> {
         let player_name = player.name();
         let is_current_player = player_idx == self.game_state.current_attacker()
             || player_idx == self.game_state.current_defender();
-
         let title_style = if is_current_player {
             Style::default().fg(Color::Yellow)
         } else {
             Style::default().fg(Color::White)
         };
-
         let block = Block::default()
             .borders(Borders::ALL)
             .title(player_name)
             .title_style(title_style);
-
         // Get inner area before rendering block
         let inner_area = block.inner(area);
-
         // Render the block
         block.render(area, buf);
-
         // Only show cards for human player
         if player.player_type() == &crate::game::PlayerType::Human {
             let selected = if player_idx == self.game_state.current_attacker()
@@ -111,7 +104,6 @@ impl<'a> GameUI<'a> {
             } else {
                 None
             };
-
             let mut row_view = CardRowView::new(player.hand().to_vec()).select(selected);
             // Add multiple selection if available
             if let Some(selected_cards) = self.multiple_selected {
@@ -126,7 +118,6 @@ impl<'a> GameUI<'a> {
             para.render(inner_area, buf);
         }
     }
-
     fn render_table(&self, area: Rect, buf: &mut Buffer) {
         let block = Block::default().borders(Borders::ALL).title("Table");
         // Get inner area before rendering block
@@ -141,7 +132,6 @@ impl<'a> GameUI<'a> {
             para.render(inner_area, buf);
         }
     }
-
     fn render_help(&self, area: Rect, buf: &mut Buffer) {
         let current_phase = self.game_state.game_phase();
         let multiple_selection = self.multiple_selected.is_some();
@@ -155,7 +145,6 @@ impl<'a> GameUI<'a> {
         let para = Paragraph::new(help_text)
             .block(Block::default().borders(Borders::ALL).title("Help"))
             .style(Style::default().fg(Color::White));
-
         para.render(area, buf);
     }
 }
@@ -172,16 +161,13 @@ impl Widget for GameUI<'_> {
                 Constraint::Length(3), // Help
             ])
             .split(area);
-
         self.render_status_bar(vertical_layout[0], buf);
-
         // For a 2-player game
         if self.game_state.players().len() >= 2 {
             self.render_player_hand(vertical_layout[1], buf, 1); // Computer player
             self.render_table(vertical_layout[2], buf);
             self.render_player_hand(vertical_layout[3], buf, 0); // Human player
         }
-
         self.render_help(vertical_layout[4], buf);
     }
 }

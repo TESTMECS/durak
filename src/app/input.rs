@@ -29,7 +29,7 @@ pub enum AppAction {
     // Drawing Phase Actions
     AcknowledgeDraw, // Any key during drawing
 }
-
+/// Handle User Input depending on the current AppState and GamePhase
 pub fn handle_key_input(
     app_state: &AppState,
     game_phase: &GamePhase,
@@ -40,7 +40,6 @@ pub fn handle_key_input(
         KeyCode::Char('q') | KeyCode::Char('Q') => return Some(AppAction::Quit),
         _ => {}
     }
-
     match app_state {
         AppState::MainMenu => match key {
             KeyCode::Char('s') | KeyCode::Char('S') => Some(AppAction::StartGame),

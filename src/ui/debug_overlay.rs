@@ -122,7 +122,6 @@ impl Widget for DebugOverlay {
             width: area.width,
             height: log_area_height,
         };
-
         // Create a background for our debug area
         let debug_block = Block::default()
             .title(" Debug Overlay [d to toggle] ")
@@ -133,20 +132,16 @@ impl Widget for DebugOverlay {
                     .fg(Color::White)
                     .add_modifier(Modifier::BOLD),
             );
-
         // Get inner area before rendering the block
         let inner_area = debug_block.inner(log_area);
-
         // Render the block background
         debug_block.render(log_area, buf);
-
         // Get log messages from our buffer
         let messages = if let Ok(buffer) = UI_LOG_BUFFER.lock() {
             buffer.clone()
         } else {
             Vec::new()
         };
-
         // Create text for log messages
         let mut text = Vec::new();
         for (timestamp, message, level) in
@@ -163,7 +158,6 @@ impl Widget for DebugOverlay {
                     LogLevel::Trace => "TRACE",
                 }
             );
-
             let line = Line::from(vec![
                 Span::styled(
                     format!("{} ", timestamp),
@@ -177,11 +171,9 @@ impl Widget for DebugOverlay {
             ]);
             text.push(line);
         }
-
         // Create the paragraph and render it within the block's inner area
         let paragraph =
             Paragraph::new(text).style(Style::default().bg(Color::Black).fg(Color::White));
-
         paragraph.render(inner_area, buf);
     }
 }
