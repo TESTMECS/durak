@@ -28,7 +28,7 @@ Get rid of all your cards. The last player with cards is the "durak" (fool).
 8. The last player with cards is the "durak"
 
 ### Multiple Card Attacks
-- Players can attack with multiple cards of the same rank
+- The human Player can attack with multiple cards of the same rank
 - The defender must defend against each card separately
 - The total number of attack cards cannot exceed the defender's hand size
 - Additional attack cards can only be played if their rank already exists on the table
@@ -63,8 +63,8 @@ The game includes an AI opponent with adjustable difficulty:
 - **Medium**: Uses better strategy, occasionally attacks with 2 cards
 - **Hard**: Uses advanced strategy, aggressively attacks with multiple cards when possible, and makes smarter defense decisions
 
-## Development && Docs. 
-- WIP
+### Reflections
+This project was a fun way to learn Rust and ratatui. Getting started was lots of fun but after a while debugging and testing became a bit of a chore later on because ofc I didn't follow correct patterns. I had an idea of adding more computer players but my brain was already rusted out and I have a different idea for this with LLMS that I think will be more fun.
 
 ## License
-GNU GPLv3
+MIT
