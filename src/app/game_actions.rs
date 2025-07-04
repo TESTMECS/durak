@@ -500,7 +500,7 @@ impl App {
             .hand()
             .iter()
             .enumerate()
-            .find(|(_, &c)| c == card)
+            .find(|&(_, &c)| c == card)
             .map(|(idx, _)| idx)
     }
 }

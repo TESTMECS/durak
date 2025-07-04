@@ -8,7 +8,6 @@ use ratatui::{
     widgets::{Block, Borders, Paragraph, Widget},
 };
 use std::sync::Mutex;
-
 // Buffer to hold our UI log messages
 lazy_static! {
     static ref UI_LOG_BUFFER: Mutex<Vec<(String, String, Level)>> = Mutex::new(Vec::new());
