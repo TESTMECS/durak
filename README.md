@@ -63,7 +63,7 @@ The game includes an AI opponent with adjustable difficulty:
 - **Medium**: Uses better strategy, occasionally attacks with 2 cards
 - **Hard**: Uses advanced strategy, aggressively attacks with multiple cards when possible, and makes smarter defense decisions
 
-### Reflections
+### P.S. 
 This project was a fun way to learn Rust and ratatui. Getting started was lots of fun but after a while debugging and testing became a bit of a chore later on because ofc I didn't follow correct patterns. I had an idea of adding more computer players but my brain was already rusted out and I have a different idea for this with LLMS that I think will be more fun.
 
 ## License
