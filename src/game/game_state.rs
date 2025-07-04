@@ -20,19 +20,22 @@ impl Display for GamePhase {
 
 #[derive(Debug, Clone)]
 pub struct GameState {
-    players: Vec<Player>,
-    deck: Deck,
-    discard_pile: Vec<Card>,
-    table_cards: Vec<(Card, Option<Card>)>, // (attacking card, defending card)
-    current_attacker: usize,
-    current_defender: usize,
-    trump_suit: Option<Suit>,
-    game_phase: GamePhase,
-    winner: Option<usize>,
-    stuck_counter: usize, // Add this field to track stuck states
+    pub players: Vec<Player>,
+    pub deck: Deck,
+    pub discard_pile: Vec<Card>,
+    pub table_cards: Vec<(Card, Option<Card>)>, // (attacking card, defending card)
+    pub current_attacker: usize,
+    pub current_defender: usize,
+    pub trump_suit: Option<Suit>,
+    pub game_phase: GamePhase,
+    pub winner: Option<usize>,
+    pub stuck_counter: usize, // Add this field to track stuck states
 }
 
 impl GameState {
+    /// Constructor for the GameState struct
+    /// Called by the `app_core.rs` when creating a new game.
+    /// Important initalitzations are `Deck::new()` and `GamePhase::Setup`
     pub fn new() -> Self {
         Self {
             players: Vec::new(),
@@ -48,27 +51,20 @@ impl GameState {
         }
     }
 
+    /// Adds a new player to the `players` vector of the GameState
     pub fn add_player(&mut self, name: String, player_type: PlayerType) {
         self.players.push(Player::new(name, player_type));
     }
-
+    /// Sets up the game by creating a new deck, shuffling it, and dealing 6 cards to each player.
+    /// The player with the lowest trump card delt is determined as the starting attacker.
     pub fn setup_game(&mut self) {
-        // Creates deck, shuffles it, and deals 6 cards to each player, determines first player,
-        // sets game phase to Attack
-        assert!(
-            self.players.len() >= 2,
-            "Need at least 2 players to start the game"
-        );
-        // Initialize and shuffle the deck
         self.deck = Deck::new();
         self.deck.shuffle();
         self.trump_suit = self.deck.trump_suit();
-        // Deal cards to players (6 cards each)
         for player in &mut self.players {
             let cards = self.deck.deal(6);
             player.add_cards(cards);
         }
-        // Determine who goes first (player with lowest trump card)
         self.determine_first_player();
         self.current_defender = (self.current_attacker + 1) % self.players.len();
         self.game_phase = GamePhase::Attack;

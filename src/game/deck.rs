@@ -5,8 +5,8 @@ use super::card::{Card, Rank, Suit};
 
 #[derive(Debug, Clone)]
 pub struct Deck {
-    cards: Vec<Card>,
-    trump_suit: Option<Suit>,
+    pub cards: Vec<Card>,
+    pub trump_suit: Option<Suit>,
 }
 
 impl Deck {
@@ -67,5 +67,15 @@ impl Deck {
     #[allow(dead_code)]
     pub fn bottom_card(&self) -> Option<&Card> {
         self.cards.last()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_new_deck() {
+        let deck = Deck::new();
+        assert_eq!(deck.remaining(), 36);
     }
 }

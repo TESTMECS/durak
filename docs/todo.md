@@ -1,6 +1,6 @@
 # TODO
 
 - [ ] Add Tests.
-- [ ] Ensure functionality. 
+- [ ] Fix AI multi-card attack functionality. 
 
 # Bugs:

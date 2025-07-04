@@ -8,9 +8,9 @@ pub enum PlayerType {
 
 #[derive(Debug, Clone)]
 pub struct Player {
-    name: String,
-    player_type: PlayerType,
-    hand: Vec<Card>,
+    pub name: String,
+    pub player_type: PlayerType,
+    pub hand: Vec<Card>,
 }
 
 impl Player {
