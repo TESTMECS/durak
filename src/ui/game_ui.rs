@@ -3,6 +3,7 @@ use crate::game::{GamePhase, GameState};
 use ratatui::{
     buffer::Buffer,
     layout::{Constraint, Direction, Layout, Rect},
+    prelude::*,
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Widget},
@@ -72,7 +73,13 @@ impl<'a> GameUI<'a> {
         ]);
 
         let paragraph = Paragraph::new(status_line)
-            .block(Block::default().borders(Borders::ALL).title("Game Status"));
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Game Status")
+                    .title_alignment(Alignment::Center),
+            )
+            .alignment(ratatui::layout::Alignment::Center);
 
         paragraph.render(area, buf);
     }
@@ -90,12 +97,10 @@ impl<'a> GameUI<'a> {
         let block = Block::default()
             .borders(Borders::ALL)
             .title(player_name)
-            .title_style(title_style);
-        // Get inner area before rendering block
+            .title_style(title_style)
+            .title_alignment(Alignment::Center);
         let inner_area = block.inner(area);
-        // Render the block
         block.render(area, buf);
-        // Only show cards for human player
         if player.player_type() == &crate::game::PlayerType::Human {
             let selected = if player_idx == self.game_state.current_attacker()
                 || player_idx == self.game_state.current_defender()
@@ -105,21 +110,23 @@ impl<'a> GameUI<'a> {
                 None
             };
             let mut row_view = CardRowView::new(player.hand().to_vec()).select(selected);
-            // Add multiple selection if available
             if let Some(selected_cards) = self.multiple_selected {
-                // Clone to get an owned Vec<usize>
                 row_view = row_view.with_multiple_selection(selected_cards.clone());
             }
             row_view.render(inner_area, buf);
         } else {
-            // For computer players, just show card backs or count
             let card_count = format!("{} cards", player.hand_size());
-            let para = Paragraph::new(card_count).style(Style::default().fg(Color::Red));
+            let para = Paragraph::new(card_count)
+                .style(Style::default().fg(Color::Red))
+                .alignment(Alignment::Center);
             para.render(inner_area, buf);
         }
     }
     fn render_table(&self, area: Rect, buf: &mut Buffer) {
-        let block = Block::default().borders(Borders::ALL).title("Table");
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .title("Table")
+            .title_alignment(Alignment::Center);
         // Get inner area before rendering block
         let inner_area = block.inner(area);
         // Render the block
@@ -127,8 +134,9 @@ impl<'a> GameUI<'a> {
         if !self.game_state.table_cards().is_empty() {
             TableView::new(self.game_state.table_cards().to_vec()).render(inner_area, buf);
         } else {
-            let para =
-                Paragraph::new("No cards on table").style(Style::default().fg(Color::DarkGray));
+            let para = Paragraph::new("No cards on table")
+                .style(Style::default().fg(Color::DarkGray))
+                .alignment(Alignment::Center);
             para.render(inner_area, buf);
         }
     }
@@ -136,15 +144,27 @@ impl<'a> GameUI<'a> {
         let current_phase = self.game_state.game_phase();
         let multiple_selection = self.multiple_selected.is_some();
         let help_text = match current_phase {
-            GamePhase::Attack => format!("←/→: Select card | M: Multi-select mode {} | Space: Toggle selection | Enter: Play card(s) | P: Pass | q: Quit", if multiple_selection { "ON" } else { "OFF" }),
-            GamePhase::Defense => format!("←/→: Select card | M: Multi-select mode {} | Space: Toggle selection | Enter: Play card (same rank = pass) | T: Take cards | q: Quit", if multiple_selection { "ON" } else { "OFF" }),
+            GamePhase::Attack => format!(
+                "←/→: Select card | M: Multi-select mode {} | Space: Toggle selection | Enter: Play card(s) | P: Pass | q: Quit",
+                if multiple_selection { "ON" } else { "OFF" }
+            ),
+            GamePhase::Defense => format!(
+                "←/→: Select card | M: Multi-select mode {} | Space: Toggle selection | Enter: Play card (same rank = pass) | T: Take cards | q: Quit",
+                if multiple_selection { "ON" } else { "OFF" }
+            ),
             GamePhase::GameOver => "Q: Quit | N: New game".to_string(),
             GamePhase::Drawing => "Press any key to continue".to_string(),
             _ => "".to_string(),
         };
         let para = Paragraph::new(help_text)
-            .block(Block::default().borders(Borders::ALL).title("Help"))
-            .style(Style::default().fg(Color::White));
+            .block(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .title("Help")
+                    .title_alignment(Alignment::Center),
+            )
+            .style(Style::default().fg(Color::White))
+            .alignment(Alignment::Center);
         para.render(area, buf);
     }
 }

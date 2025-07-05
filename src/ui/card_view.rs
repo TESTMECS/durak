@@ -97,7 +97,8 @@ impl Widget for CardRowView {
             .collect::<Vec<_>>();
         let layout = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints(widths);
+            .constraints(widths)
+            .horizontal_margin((area.width - (card_width + spacing) * cards_to_render as u16) / 2);
         // Split the area into sections for each card
         let sections = layout.split(area);
         for (i, &card) in self.cards.iter().take(visible_cards).enumerate() {
@@ -148,7 +149,8 @@ impl Widget for TableView {
             .collect::<Vec<_>>();
         let horizontal_layout = Layout::default()
             .direction(Direction::Horizontal)
-            .constraints(widths);
+            .constraints(widths)
+            .horizontal_margin((area.width - (pair_width + spacing) * pairs_to_render as u16) / 2);
         // Split the area into sections for each pair
         let sections = horizontal_layout.split(area);
         for (i, (attack_card, defend_card)) in
