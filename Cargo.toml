@@ -1,6 +1,6 @@
 [package]
 name = "durak"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["TESTME <andrew.warkentin@drewftg.net>"]
 description = "A terminal-based implementation of the popular Russian card game Durak, built with Rust and ratatui."
 license = "MIT"
