@@ -1,0 +1,21 @@
+[package]
+name = "durak"
+version = "0.2.0"
+authors = ["TESTME <andrew.warkentin@drewftg.net>"]
+description = "A terminal-based implementation of the popular Russian card game Durak, built with Rust and ratatui."
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/TESTMECS/durak"
+keywords = ["game", "terminal", "rust", "ratatui", "durak"]
+categories = ["command-line-utilities", "games"]
+edition = "2024"
+
+[dependencies]
+ratatui = "0.25.0"
+crossterm = "0.27.0"
+rand = "0.8.5"
+anyhow = "1.0.79"
+log = "0.4"
+env_logger = "0.10"
+lazy_static = "1.4.0"
+chrono = "0.4"
