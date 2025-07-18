@@ -1,21 +1,14 @@
-/*
- * app_core.rs - Core App struct and basic lifecycle methods
- *
- * This file contains the main App struct definition, initialization,
- * and core methods for high-level application state management.
- */
 use super::render::render_ui;
 use super::state::AppState;
 use crate::ui::debug_overlay::{debug, error, info};
-use crossterm::terminal::{disable_raw_mode, LeaveAlternateScreen};
 use crossterm::ExecutableCommand;
-use ratatui::backend::Backend;
+use crossterm::terminal::{LeaveAlternateScreen, disable_raw_mode};
 use ratatui::Terminal;
+use ratatui::backend::Backend;
 use std::io::{self, stdout};
 
 use crate::game::{AiDifficulty, AiPlayer, GamePhase, GameState, PlayerType};
 
-/// Main application struct that contains all game state and UI state
 pub struct App {
     pub game_state: GameState,
     pub app_state: AppState,
@@ -29,8 +22,6 @@ pub struct App {
 }
 
 impl App {
-    /// Main Constructor called by `main.rs`
-    /// Creates a new game state and initalizes the AI/Computer Player and the Human Player state.
     pub fn new() -> Self {
         info("Creating new App instance");
         let mut game_state = GameState::new();
@@ -52,7 +43,6 @@ impl App {
     }
     /// Safely exits the game, restoring terminal state
     /// This should be called when encountering errors to ensure terminal is restored
-    /// Returns an io::Error if terminal restoration fails
     pub fn safe_exit(&mut self, error_msg: Option<&str>) -> io::Result<()> {
         self.should_quit = true;
         if let Some(msg) = error_msg {

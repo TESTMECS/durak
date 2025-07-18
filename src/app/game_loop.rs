@@ -7,11 +7,11 @@
  * - Main event loop with input polling
  */
 use super::app_core::App;
-use super::input::{handle_key_input, AppAction};
+use super::input::{AppAction, handle_key_input};
 use crate::ui::debug_overlay::{error, trace};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
-use ratatui::backend::Backend;
 use ratatui::Terminal;
+use ratatui::backend::Backend;
 use std::io;
 
 impl App {
