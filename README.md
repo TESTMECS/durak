@@ -1,4 +1,4 @@
-# [durak](https://crates.io/crates/durak/0.2.0)
+# [crates.io](https://crates.io/crates/durak)
 
 A terminal-based implementation of the popular Russian card game Durak, built with Rust and [ratatui](https://github.com/ratatui-org/ratatui).
 
