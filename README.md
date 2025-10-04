@@ -1,36 +1,17 @@
 
 # [durak](https://crates.io/crates/durak)
 built with Rust and [ratatui](https://github.com/ratatui-org/ratatui).
+## Screenshots
+<img width="1851" height="1075" alt="4742c63bf649639c1f01b9a202685529" src="https://github.com/user-attachments/assets/285f7d1d-e8e8-4123-a447-30e711746552" />
+<img width="1845" height="1039" alt="0c7311b94632b97616f928c92c09e5e8" src="https://github.com/user-attachments/assets/0a08726f-8bb3-4413-8fb1-db29aa8dc07a" />
+
 ## Game Rules
 Durak is a card game played with 2-6 players using a 36-card deck (cards 6 through Ace).
 [Wikipedia](https://en.wikipedia.org/wiki/Durak)
 ### Objective
 Get rid of all your cards. The last player with cards is the "durak" (fool).
-### Setup
-1. Each player receives 6 cards
-2. The next card determines the trump suit
-3. The player with the lowest trump card goes first
-### Gameplay
-1. The attacker plays a card
-2. The defender must either:
-   - Beat it with a higher card of the same suit or a trump
-   - Pass the attack by playing a card of the same rank (regardless of suit) to the next player
-3. If a pass occurs, the next player must now defend against both cards
-4. If defense is successful, the defender becomes the next attacker
-5. If the defender can't or won't defend, they pick up all cards on the table, and the next player becomes the attacker
-6. After each round, players draw back up to 6 cards (attacker draws first)
-7. Once the deck is empty, players with no cards are out of the game
-8. The last player with cards is the "durak"
-# Features
-## Multiple Card Attacks
-- The human Player can attack with multiple cards of the same rank
-- The defender must defend against each card separately
-- The total number of attack cards cannot exceed the defender's hand size
-- Additional attack cards can only be played if their rank already exists on the table
-- Use 'M' to toggle multiple selection mode, Space to select cards, Enter to play all selected cards
-## AI Difficulty Levels
-- Easy, Medium, Hard, encorporates statistical strategies.
-## Bugs
-- Please report any bugs to issues this is my first crate. 
 
-
+## Note !!
+1. Please report any issues. 
+2. I have made two other CLI durak games: [React/Ink/TS](https://github.com/TESTMECS/durakink) [BubbleTea/Go](https://github.com/TESTMECS/durakgo) . Both of which I found a lot faster iterations to develop and more fun.
+3. The Ai Strategy is specifically defined for this game. For the TS and Go versions I opted to use a Monte Carlo Tree Search - I've found this version more enjoyable to play against though.
