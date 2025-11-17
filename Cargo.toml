@@ -1,6 +1,6 @@
 [package]
 name = "durak"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["TESTME <andrew.warkentin@drewftg.net>"]
 description = "tui card game 'durak'(fool) built with ratatui."
 license = "MIT"
