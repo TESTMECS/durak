@@ -2,7 +2,6 @@ use super::card::{Card, Suit};
 use super::deck::Deck;
 use super::player::{Player, PlayerType};
 use arrayvec::ArrayVec;
-use std::collections::VecDeque;
 use std::fmt::Display;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -179,39 +178,27 @@ impl GameState {
     }
     /// Checks defense then puts cards into the table.
     pub fn discard_cards(&mut self, cards: Vec<(usize, Card)>) {
-        cards.iter().for_each(|(idx, card)| {
-            self.table_cards[*idx].1 = Some(*card); // add card to defended table
-        });
+        for (idx, card) in cards {
+            self.table_cards[idx].1 = Some(card); // add card to defended table
+        }
         // Check if all attacks are defended
         let all_defended = !self
             .table_cards
             .iter()
             .any(|(_, defense)| defense.is_none());
-        if all_defended {
-            // All attacks successfully defended
-            // Move cards from table to discard pile
-            let cards_to_discard = Vec::new();
-            // for (attack, defense) in std::mem::take(&mut self.table_cards) {
-            //     cards_to_discard.push(attack);
-            //     if let Some(def_card) = defense {
-            //         cards_to_discard.push(def_card);
-            //     }
-            // }
-            for (a, d) in self.table_cards.drain(..) {
-                self.discard_pile.push(a);
-                if let Some(x) = d {
-                    self.discard_pile.push(x);
-                }
-            }
-            self.discard_pile.extend(cards_to_discard);
-            // Successful defense - swap attacker and defender roles
-            // After successful defense, defender becomes new attacker
-            let old_defender = self.current_defender;
-            self.current_attacker = old_defender;
-            self.current_defender = (old_defender + 1) % self.players.len();
-            // Move to drawing phase
-            self.game_phase = GamePhase::Drawing;
+        if !all_defended {
+            return;
         }
+        for (a, d) in self.table_cards.drain(..) {
+            self.discard_pile.push(a);
+            if let Some(x) = d {
+                self.discard_pile.push(x);
+            }
+        }
+        let old_defender = self.current_defender;
+        self.current_attacker = old_defender;
+        self.current_defender = (old_defender + 1) % self.players.len();
+        self.game_phase = GamePhase::Drawing;
     }
     /// Take cards from the table and put them into the player's hand.
     pub fn take_cards(&mut self) -> Result<(), &'static str> {
@@ -220,17 +207,14 @@ impl GameState {
             return Err("No cards on table to take");
         }
         let defender = &mut self.players[self.current_defender];
-        let table_cards = std::mem::take(&mut self.table_cards);
-        let mut cards_to_take = Vec::new();
-        for (attack, defense) in table_cards {
-            cards_to_take.push(attack);
-            if let Some(card) = defense {
-                cards_to_take.push(card);
+        let mut taken = Vec::with_capacity(self.table_cards.len() * 2);
+        for (a, d) in self.table_cards.drain(..) {
+            taken.push(a);
+            if let Some(x) = d {
+                taken.push(x);
             }
         }
-        // adding cards to defender hand.
-        defender.add_cards(cards_to_take);
-        // Move to drawing phase
+        defender.add_cards(taken);
         self.game_phase = GamePhase::Drawing;
         Ok(())
     }
@@ -239,22 +223,15 @@ impl GameState {
         if self.game_phase != GamePhase::Drawing {
             return;
         }
-        // Increment stuck counter to detect infinite loops
         self.stuck_counter += 1;
         if self.stuck_counter > 5 {
-            // Reset game phase and counter
             self.game_phase = GamePhase::Attack;
             self.stuck_counter = 0;
-            // Clear the table if needed
-            if !self.table_cards.is_empty() {
-                self.discard_pile
-                    .extend(self.table_cards.drain(..).flat_map(|(a, d)| {
-                        let mut cards = vec![a];
-                        if let Some(def) = d {
-                            cards.push(def);
-                        }
-                        cards
-                    }));
+            for (a, d) in self.table_cards.drain(..) {
+                self.discard_pile.push(a);
+                if let Some(x) = d {
+                    self.discard_pile.push(x);
+                }
             }
             return;
         }
@@ -268,86 +245,60 @@ impl GameState {
             self.stuck_counter = 0;
             return;
         }
-        // Drawing logic - first attacker draws, then defender, then others
-        if !self.deck.is_empty() {
-            let player_count = self.players.len();
-            let mut drawing_order = VecDeque::new();
-            // Start with attacker
-            let mut idx = self.current_attacker;
-            for _ in 0..player_count {
-                drawing_order.push_back(idx);
-                idx = (idx + 1) % player_count;
+        let n = self.players.len();
+        let mut idx = self.current_attacker;
+        for _ in 0..n {
+            if self.deck.is_empty() {
+                break;
             }
-            // Draw cards to bring each hand back to 6
-            while let Some(player_idx) = drawing_order.pop_front() {
-                let player = &mut self.players[player_idx];
-                let cards_needed = 6usize.saturating_sub(player.hand_size());
-                if cards_needed > 0 && !self.deck.is_empty() {
-                    let new_cards = self.deck.deal(cards_needed);
-                    // No need to track if cards are drawn
-                    player.add_cards(new_cards);
-                }
+            let p = &mut self.players[idx];
+            let need = 6usize.saturating_sub(p.hand_size());
+            if need > 0 {
+                let new_cards = self.deck.deal(need);
+                p.add_cards(new_cards);
             }
-            // Check if any player has run out of cards and the game is over
-            self.check_game_over();
-            if self.game_phase != GamePhase::GameOver {
-                // Only change attacker/defender if the table is NOT empty
-                // If table is empty, the defender already became the attacker in the defend method
-                if !self.table_cards.is_empty() {
-                    let _prev_attacker = self.current_attacker;
-                    let _prev_defender = self.current_defender;
-                    // If the defender took cards, they're skipped
-                    self.current_attacker = (self.current_defender + 1) % self.players.len();
-                    self.current_defender = (self.current_attacker + 1) % self.players.len();
-                }
-                // Set the game phase back to Attack
-                self.game_phase = GamePhase::Attack;
-            }
-        } else {
-            // Check for game over condition
-            self.check_game_over();
-            if self.game_phase != GamePhase::GameOver {
-                self.game_phase = GamePhase::Attack;
-            }
+            idx = (idx + 1) % n;
         }
-        // At the end of draw_cards, reset the stuck counter if we successfully transitioned
-        if self.game_phase == GamePhase::Attack || self.game_phase == GamePhase::GameOver {
+        self.check_game_over();
+        if self.game_phase != GamePhase::GameOver {
+            // If table not empty defender took cards → skip them
+            if !self.table_cards.is_empty() {
+                self.current_attacker = (self.current_defender + 1) % n;
+                self.current_defender = (self.current_attacker + 1) % n;
+            }
+
+            self.game_phase = GamePhase::Attack;
+        }
+
+        if matches!(self.game_phase, GamePhase::Attack | GamePhase::GameOver) {
             self.stuck_counter = 0;
         }
     }
     /// Check game over logic.
     pub fn check_game_over(&mut self) -> bool {
-        if self.deck.is_empty() {
-            let mut players_with_cards = 0;
-            let mut last_player_with_cards = None;
-            // Count players with cards and remember the last one with cards
-            for (idx, player) in self.players.iter().enumerate() {
-                if !player.is_empty_hand() {
-                    players_with_cards += 1;
-                    last_player_with_cards = Some(idx);
-                }
-            }
-            // Game ends when only one player (or zero) has cards left
-            if players_with_cards <= 1 {
-                // If there's one player with cards, they're the "durak" (loser)
-                // In Durak, the winner is the player who gets rid of cards first
-                if players_with_cards == 1 {
-                    if let Some(loser_idx) = last_player_with_cards {
-                        // In a 2-player game, if player 1 is the loser, then player 0 is the winner
-                        let winner_idx = if loser_idx == 1 { 0 } else { 1 };
-                        self.winner = Some(winner_idx);
-                        self.game_phase = GamePhase::GameOver;
-                    }
-                } else if players_with_cards == 0 {
-                    // Draw or edge case - no real winner in Durak, but let's handle it
-                    self.game_phase = GamePhase::GameOver;
-                }
-                return true;
-            }
-            false // More than one player has cards
-        } else {
-            false // Deck is not empty
+        if !self.deck.is_empty() {
+            return false;
         }
+        let mut count = 0;
+        let mut last = None;
+        for (i, p) in self.players.iter().enumerate() {
+            if !p.is_empty_hand() {
+                count += 1;
+                last = Some(i);
+            }
+        }
+        if count <= 1 {
+            match (count, last) {
+                (1, Some(loser)) => {
+                    let winner = if loser == 1 { 0 } else { 1 };
+                    self.winner = Some(winner);
+                }
+                _ => {}
+            }
+            self.game_phase = GamePhase::GameOver;
+            return true;
+        }
+        false
     }
     // Getters
     #[inline]

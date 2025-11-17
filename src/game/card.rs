@@ -1,6 +1,7 @@
 use std::fmt;
 use std::hash::Hash;
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Suit {
     Clubs,
@@ -29,6 +30,7 @@ impl Suit {
     }
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Rank {
     Six,
