@@ -1,7 +1,7 @@
 [package]
 name = "durak"
-version = "1.0.1"
-authors = ["TESTME <andrew.warkentin@drewftg.net>"]
+version = "1.0.2"
+authors = ["TESTME <axwar7410@gmail.com>"]
 description = "tui card game 'durak'(fool) built with ratatui."
 license = "MIT"
 readme = "README.md"
