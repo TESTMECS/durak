@@ -56,15 +56,18 @@ impl GameState {
     /// Sets up the game by creating a new deck, shuffling it, and dealing 6 cards to each player.
     /// The player with the lowest trump card delt is determined as the starting attacker.
     pub fn setup_game(&mut self) {
-        self.deck = Deck::new();
+        let deck = Deck::new();
+        self.deck = deck;
         self.deck.shuffle();
+
         self.trump_suit = self.deck.trump_suit();
-        for player in &mut self.players {
-            let cards = self.deck.deal(6);
-            player.add_cards(cards);
+
+        for p in &mut self.players {
+            p.add_cards(self.deck.deal(6));
         }
+
         self.determine_first_player();
-        self.current_defender = (self.current_attacker + 1) % self.players.len();
+        self.current_defender = (self.current_attacker + 1) & 1;
         self.game_phase = GamePhase::Attack;
         self.stuck_counter = 0; // Reset stuck counter when starting a new game
     }
@@ -72,108 +75,91 @@ impl GameState {
     /// If no trump suit is present, the player is chosen.
     fn determine_first_player(&mut self) {
         if let Some(trump_suit) = self.trump_suit {
-            // Find the player with the lowest trump card
-            let mut lowest_player = 0;
-            let mut lowest_rank = None;
-            for (i, player) in self.players.iter().enumerate() {
-                if let Some((_, card)) = player.get_lowest_trump(trump_suit) {
-                    if lowest_rank.is_none() || card.rank < lowest_rank.unwrap() {
-                        lowest_rank = Some(card.rank);
-                        lowest_player = i;
+            let mut best = None;
+            for (idx, p) in self.players.iter().enumerate() {
+                if let Some((_, c)) = p.get_lowest_trump(trump_suit) {
+                    let r = c.rank;
+                    match best {
+                        None => best = Some((idx, r)),
+                        Some((_, best_r)) if r < best_r => best = Some((idx, r)),
+                        _ => {}
                     }
                 }
             }
-            // If someone has a trump card, they go first
-            if lowest_rank.is_some() {
-                self.current_attacker = lowest_player;
+            if let Some((idx, _)) = best {
+                self.current_attacker = idx;
                 return;
             }
         }
-        // If no one has a trump card or there's no trump suit, just start with player 0
         self.current_attacker = 0;
     }
     /// General attack logic
+    #[inline]
     pub fn attack(&mut self, card_idx: usize, player_idx: usize) -> Result<(), &'static str> {
-        let attacker = &mut self.players[player_idx];
-        if let Some(card) = attacker.remove_card(card_idx) {
-            self.table_cards.push((card, None));
-            // Transition to Defense phase after successful attack
-            self.game_phase = GamePhase::Defense;
-            // Set the attacker and defender roles properly
-            self.current_attacker = player_idx;
-            self.current_defender = (player_idx + 1) % self.players.len();
-            return Ok(());
+        match self.players[player_idx].remove_card(card_idx) {
+            Some(card) => {
+                self.table_cards.push((card, None));
+                self.game_phase = GamePhase::Defense;
+                self.current_attacker = player_idx;
+                self.current_defender = (player_idx + 1) & 1;
+                Ok(())
+            }
+            None => Err("Invalid card index"),
         }
-        Err("Invalid card index")
     }
-
     /// Handle passing an attack to the next player if cards are the same rank
     pub fn pass_attack(&mut self, card_idx: usize, _attack_idx: usize) -> Result<(), &'static str> {
-        let defender = &mut self.players[self.current_defender];
-        // Remove the card from defender's hand
-        if let Some(card) = defender.remove_card(card_idx) {
-            // Add a new attack card to the table
-            self.table_cards.push((card, None));
-            // Swap the roles - the current defender becomes the attacker
-            let old_defender = self.current_defender;
-            self.current_attacker = old_defender;
-            // The original attacker becomes the defender
-            self.current_defender = (old_defender + 1) % self.players.len();
-            // Stay in Defense phase
-            self.game_phase = GamePhase::Defense;
-            return Ok(());
+        let defender = self.current_defender;
+        match self.players[defender].remove_card(card_idx) {
+            Some(card) => {
+                self.table_cards.push((card, None));
+                self.current_attacker = defender;
+                self.current_defender = (defender + 1) & 1;
+                self.game_phase = GamePhase::Defense;
+                Ok(())
+            }
+            None => Err("Failed to remove card from hand during pass"),
         }
-        Err("Failed to remove card from hand during pass")
     }
     /// General defense logic
     pub fn defend(&mut self, card_idx: usize) -> Result<(), &'static str> {
-        // Find the first undefended attack card
-        let undefended_idx = self
-            .table_cards
-            .iter()
-            .position(|(_, defense)| defense.is_none());
-        if let Some(attack_idx) = undefended_idx {
-            let defender = &mut self.players[self.current_defender];
-            if card_idx >= defender.hand().len() {
-                return Err("Invalid card index");
-            }
-            let defense_card = defender.hand()[card_idx];
-            let attack_card = self.table_cards[attack_idx].0;
-            // First check if this is a pass (podkidnoy variant)
-            // Check for same rank (passing condition)
-            if defense_card.can_pass(&attack_card) {
-                // This is a pass - handle differently from a regular defense
-                return self.pass_attack(card_idx, attack_idx);
-            }
-            // Check if defense is valid
-            let is_valid = if let Some(trump) = self.trump_suit {
-                if attack_card.suit == trump {
-                    // If attacking with trump, must defend with higher trump
-                    defense_card.suit == trump && defense_card.rank > attack_card.rank
-                } else if defense_card.suit == trump {
-                    // Trump can beat any non-trump
+        let attack_idx = match self.table_cards.iter().position(|(_, d)| d.is_none()) {
+            Some(i) => i,
+            None => return Err("No undefended attacks"),
+        };
+        let defender = &mut self.players[self.current_defender];
+        if card_idx >= defender.hand().len() {
+            return Err("Invalid card index");
+        }
+        let defense_card = defender.hand()[card_idx];
+        let attack_card = self.table_cards[attack_idx].0;
+        if defense_card.rank == attack_card.rank {
+            return self.pass_attack(card_idx, attack_idx);
+        }
+        let trump = self.trump_suit;
+        let valid = match trump {
+            Some(t) => {
+                let a_t = attack_card.suit == t;
+                let d_t = defense_card.suit == t;
+                if a_t {
+                    d_t && defense_card.rank > attack_card.rank
+                } else if d_t {
                     true
                 } else {
-                    // Same suit, higher rank
                     defense_card.suit == attack_card.suit && defense_card.rank > attack_card.rank
                 }
-            } else {
-                // No trump suit - just check for same suit and higher rank
-                defense_card.suit == attack_card.suit && defense_card.rank > attack_card.rank
-            };
-            if is_valid {
-                // Remove the card from defender's hand
-                if let Some(card) = defender.remove_card(card_idx) {
-                    // Add as defense card
-                    self.table_cards[attack_idx].1 = Some(card);
-                    return Ok(());
-                }
-                Err("Failed to remove card from hand")
-            } else {
-                Err("Invalid defense - card cannot beat the attack")
             }
+            None => defense_card.suit == attack_card.suit && defense_card.rank > attack_card.rank,
+        };
+        if !valid {
+            return Err("Invalid defense");
+        }
+
+        if let Some(card) = defender.remove_card(card_idx) {
+            self.table_cards[attack_idx].1 = Some(card);
+            Ok(())
         } else {
-            Err("No undefended attacks to defend against")
+            Err("Failed to remove card from hand")
         }
     }
     /// Checks defense then puts cards into the table.
