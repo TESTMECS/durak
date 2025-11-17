@@ -20,7 +20,7 @@ impl Display for GamePhase {
 
 #[derive(Debug, Clone)]
 pub struct GameState {
-    pub players: [Player; 2], // ? []
+    pub players: [Player; 2],
     pub deck: Deck,
     pub discard_pile: Vec<Card>,
     pub table_cards: Vec<(Card, Option<Card>)>, // (attacking card, defending card)

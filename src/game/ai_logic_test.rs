@@ -13,7 +13,7 @@ mod tests {
         trump_suit: Suit,
     ) -> GameState {
         let game_state = GameState {
-            players: vec![
+            players: [
                 Player {
                     name: "AI".to_string(),
                     player_type: PlayerType::Computer,

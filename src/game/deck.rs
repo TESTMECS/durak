@@ -3,28 +3,42 @@ use rand::thread_rng;
 
 use super::card::{Card, Rank, Suit};
 
+pub const fn build_full_deck() -> [Card; 36] {
+    let suits = Suit::all();
+    let ranks = Rank::all();
+
+    let mut out = [Card::new(Suit::Clubs, Rank::Six); 36];
+    let mut i = 0;
+
+    let mut s = 0;
+    while s < suits.len() {
+        let mut r = 0;
+        while r < ranks.len() {
+            out[i] = Card::new(suits[s], ranks[r]);
+            i += 1;
+            r += 1;
+        }
+        s += 1;
+    }
+
+    out
+}
+
+pub const FULL_DECK: [Card; 36] = build_full_deck();
+
 #[derive(Debug, Clone)]
 pub struct Deck {
     pub cards: Vec<Card>,
     pub trump_suit: Option<Suit>,
 }
-
 impl Deck {
+    #[inline]
     pub fn new() -> Self {
-        let mut cards = Vec::with_capacity(36);
-
-        for suit in Suit::all() {
-            for rank in Rank::all() {
-                cards.push(Card::new(suit, rank));
-            }
-        }
-
         Self {
-            cards,
+            cards: FULL_DECK.to_vec(),
             trump_suit: None,
         }
     }
-
     pub fn shuffle(&mut self) {
         let mut rng = thread_rng();
         self.cards.shuffle(&mut rng);
@@ -34,7 +48,6 @@ impl Deck {
             self.trump_suit = Some(bottom_card.suit);
         }
     }
-
     pub fn deal(&mut self, count: usize) -> Vec<Card> {
         let mut hand = Vec::with_capacity(count);
         for _ in 0..count {
@@ -47,24 +60,27 @@ impl Deck {
         hand
     }
 
-    pub fn trump_suit(&self) -> Option<Suit> {
+    #[inline]
+    pub const fn trump_suit(&self) -> Option<Suit> {
         self.trump_suit
     }
 
-    pub fn is_empty(&self) -> bool {
+    #[inline]
+    pub const fn is_empty(&self) -> bool {
         self.cards.is_empty()
     }
 
-    pub fn remaining(&self) -> usize {
+    #[inline]
+    pub const fn remaining(&self) -> usize {
         self.cards.len()
     }
-
+    #[inline]
     // Alias for remaining() to match AI implementation naming
-    pub fn size(&self) -> usize {
+    pub const fn size(&self) -> usize {
         self.cards.len()
     }
-
     #[allow(dead_code)]
+    #[inline]
     pub fn bottom_card(&self) -> Option<&Card> {
         self.cards.last()
     }

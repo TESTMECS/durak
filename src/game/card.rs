@@ -10,11 +10,12 @@ pub enum Suit {
 }
 
 impl Suit {
-    pub fn all() -> Vec<Suit> {
-        vec![Suit::Clubs, Suit::Diamonds, Suit::Hearts, Suit::Spades]
+    #[inline]
+    pub const fn all() -> [Suit; 4] {
+        [Suit::Clubs, Suit::Diamonds, Suit::Hearts, Suit::Spades]
     }
-
-    pub fn symbol(&self) -> &str {
+    #[inline]
+    pub const fn symbol(&self) -> &str {
         match self {
             Suit::Clubs => "♣",
             Suit::Diamonds => "♦",
@@ -22,8 +23,8 @@ impl Suit {
             Suit::Spades => "♠",
         }
     }
-
-    pub fn is_red(&self) -> bool {
+    #[inline]
+    pub const fn is_red(&self) -> bool {
         matches!(self, Suit::Diamonds | Suit::Hearts)
     }
 }
@@ -42,8 +43,9 @@ pub enum Rank {
 }
 
 impl Rank {
-    pub fn all() -> Vec<Rank> {
-        vec![
+    #[inline]
+    pub const fn all() -> [Rank; 9] {
+        [
             Rank::Six,
             Rank::Seven,
             Rank::Eight,
@@ -55,8 +57,8 @@ impl Rank {
             Rank::Ace,
         ]
     }
-
-    pub fn symbol(&self) -> &str {
+    #[inline]
+    pub const fn symbol(&self) -> &str {
         match self {
             Rank::Six => "6",
             Rank::Seven => "7",
@@ -78,10 +80,10 @@ pub struct Card {
 }
 
 impl Card {
-    pub fn new(suit: Suit, rank: Rank) -> Self {
-        Self { suit, rank }
+    #[inline]
+    pub const fn new(suit: Suit, rank: Rank) -> Card {
+        Card { suit, rank }
     }
-
     /// Determines if this card can beat another card in Durak rules
     ///
     /// A card can beat another card if:
@@ -108,7 +110,6 @@ impl Card {
         // In all other cases, the card cannot be beaten by this card.
         false
     }
-
     /// Determines if this card can be used to pass an attack in Podkidnoy Durak
     ///
     /// A card can pass an attack if it has the same rank as the attacking card
@@ -119,6 +120,7 @@ impl Card {
     ///
     /// # Returns
     /// `true` if this card can pass the attack, `false` otherwise
+    #[inline]
     pub fn can_pass(&self, other: &Card) -> bool {
         self.rank == other.rank
     }
@@ -142,7 +144,7 @@ mod tests {
         let trump_suit = Suit::Spades;
         let card1 = Card::new(Suit::Hearts, Rank::Seven); // 7 of Hearts
         let card2 = Card::new(Suit::Hearts, Rank::Ten); // 10 of Hearts
-                                                        // We expect card2 to beat card1 because it has a higher rank.
+        // We expect card2 to beat card1 because it has a higher rank.
         let card3 = Card::new(Suit::Diamonds, Rank::Seven); // 7 of Diamonds
         assert!(card2.can_beat(&card1, trump_suit));
         assert!(!card1.can_beat(&card2, trump_suit));
@@ -155,7 +157,7 @@ mod tests {
         let trump_suit = Suit::Spades;
         let card1 = Card::new(Suit::Spades, Rank::Six); // 6 of Spades
         let card2 = Card::new(Suit::Spades, Rank::Seven); // 7 of Spades
-                                                          // We expect card2 to beat card1 because it has a higher rank.
+        // We expect card2 to beat card1 because it has a higher rank.
         assert!(card2.can_beat(&card1, trump_suit));
         assert!(!card1.can_beat(&card2, trump_suit));
     }
