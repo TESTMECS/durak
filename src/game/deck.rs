@@ -75,7 +75,6 @@ impl Deck {
         self.cards.len()
     }
     #[inline]
-    // Alias for remaining() to match AI implementation naming
     pub const fn size(&self) -> usize {
         self.cards.len()
     }

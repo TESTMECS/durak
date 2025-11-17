@@ -96,19 +96,12 @@ impl Card {
     ///
     /// # Returns
     /// `true` if this card can beat the other card, `false` otherwise
+    #[inline]
     pub fn can_beat(&self, other: &Card, trump_suit: Suit) -> bool {
-        // Case 1: Same suit - higher rank wins
         if self.suit == other.suit {
             return self.rank > other.rank;
         }
-
-        // Case 2: Different suits - trump beats non-trump
-        if self.suit == trump_suit && other.suit != trump_suit {
-            return true;
-        }
-
-        // In all other cases, the card cannot be beaten by this card.
-        false
+        self.suit == trump_suit && other.suit != trump_suit
     }
     /// Determines if this card can be used to pass an attack in Podkidnoy Durak
     ///
