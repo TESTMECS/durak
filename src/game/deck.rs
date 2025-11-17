@@ -1,3 +1,4 @@
+use arrayvec::ArrayVec;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -28,14 +29,14 @@ pub const FULL_DECK: [Card; 36] = build_full_deck();
 
 #[derive(Debug, Clone)]
 pub struct Deck {
-    pub cards: Vec<Card>,
+    pub cards: ArrayVec<Card, 36>,
     pub trump_suit: Option<Suit>,
 }
 impl Deck {
     #[inline]
     pub fn new() -> Self {
         Self {
-            cards: FULL_DECK.to_vec(),
+            cards: FULL_DECK.into(),
             trump_suit: None,
         }
     }

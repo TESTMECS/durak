@@ -6,10 +6,12 @@ mod tests {
     use crate::game::game_state::{GamePhase, GameState};
     use crate::game::player::{Player, PlayerType};
 
+    use arrayvec::ArrayVec;
+
     // Helper function to create a game state for testing
     fn create_test_game_state(
-        ai_hand: Vec<Card>,
-        table_cards: Vec<(Card, Option<Card>)>,
+        ai_hand: ArrayVec<Card, 36>,
+        table_cards: ArrayVec<(Card, Option<Card>), 12>,
         trump_suit: Suit,
     ) -> GameState {
         let game_state = GameState {
@@ -22,14 +24,14 @@ mod tests {
                 Player {
                     name: "Human".to_string(),
                     player_type: PlayerType::Human,
-                    hand: vec![],
+                    hand: ArrayVec::new(),
                 },
             ],
             deck: Deck {
-                cards: vec![],
+                cards: ArrayVec::new(),
                 trump_suit: Some(trump_suit),
             },
-            discard_pile: vec![],
+            discard_pile: ArrayVec::new(),
             table_cards,
             current_attacker: 1,
             current_defender: 0,
@@ -45,11 +47,12 @@ mod tests {
     /// Test that the Easy AI takes cards if it cannot defend
     fn test_easy_should_take_cards_cannot_defend() {
         let ai = AiPlayer::new(AiDifficulty::Easy);
-        let ai_hand = vec![Card::new(Suit::Hearts, Rank::Seven)];
-        let table_cards = vec![
-            (Card::new(Suit::Hearts, Rank::Six), None),
-            (Card::new(Suit::Hearts, Rank::Nine), None),
-        ];
+        let mut ai_hand = ArrayVec::new();
+        ai_hand.push(Card::new(Suit::Hearts, Rank::Seven));
+        let mut table_cards = ArrayVec::new();
+        table_cards.push((Card::new(Suit::Hearts, Rank::Six), None));
+        table_cards.push((Card::new(Suit::Hearts, Rank::Nine), None));
+
         let game_state = create_test_game_state(ai_hand, table_cards, Suit::Spades);
 
         assert!(ai.should_take_cards(&game_state, 0));
@@ -59,11 +62,11 @@ mod tests {
     /// Test that the Easy AI can make an attack move with the lowest-ranking card and save the trump
     fn test_easy_make_attack_move_initial() {
         let ai = AiPlayer::new(AiDifficulty::Easy);
-        let ai_hand = vec![
-            Card::new(Suit::Hearts, Rank::Seven),
-            Card::new(Suit::Spades, Rank::Six), // Trump
-        ];
-        let game_state = create_test_game_state(ai_hand, vec![], Suit::Spades);
+        let mut ai_hand = ArrayVec::new();
+        ai_hand.push(Card::new(Suit::Hearts, Rank::Seven));
+        ai_hand.push(Card::new(Suit::Spades, Rank::Six)); // Trump
+
+        let game_state = create_test_game_state(ai_hand, ArrayVec::new(), Suit::Spades);
 
         let attack_move = ai.make_attack_move(&game_state, 0).unwrap();
         assert_eq!(attack_move.len(), 1);
@@ -74,11 +77,12 @@ mod tests {
     /// Test that the Easy AI recognizes that it can "pass" with the same card
     fn test_easy_make_attack_move_add_to_attack() {
         let ai = AiPlayer::new(AiDifficulty::Easy);
-        let ai_hand = vec![
-            Card::new(Suit::Hearts, Rank::Seven),
-            Card::new(Suit::Diamonds, Rank::Ten),
-        ];
-        let table_cards = vec![(Card::new(Suit::Hearts, Rank::Ten), None)];
+        let mut ai_hand = ArrayVec::new();
+        ai_hand.push(Card::new(Suit::Hearts, Rank::Seven));
+        ai_hand.push(Card::new(Suit::Diamonds, Rank::Ten));
+
+        let mut table_cards = ArrayVec::new();
+        table_cards.push((Card::new(Suit::Hearts, Rank::Ten), None));
         let game_state = create_test_game_state(ai_hand, table_cards, Suit::Spades);
 
         let attack_move = ai.make_attack_move(&game_state, 0).unwrap();
@@ -90,11 +94,11 @@ mod tests {
     /// Test that the Easy AI recognizes it can defend (don't use trumps)
     fn test_easy_make_defense_move_non_trump() {
         let ai = AiPlayer::new(AiDifficulty::Easy);
-        let ai_hand = vec![
-            Card::new(Suit::Hearts, Rank::Ten),
-            Card::new(Suit::Spades, Rank::Jack),
-        ];
-        let table_cards = vec![(Card::new(Suit::Hearts, Rank::Seven), None)];
+        let mut ai_hand = ArrayVec::new();
+        ai_hand.push(Card::new(Suit::Hearts, Rank::Ten));
+        ai_hand.push(Card::new(Suit::Spades, Rank::Jack));
+        let mut table_cards = ArrayVec::new();
+        table_cards.push((Card::new(Suit::Hearts, Rank::Seven), None));
         let game_state = create_test_game_state(ai_hand, table_cards, Suit::Spades);
 
         let defense_move = ai.make_defense_move(&game_state, 0).unwrap();
@@ -106,8 +110,10 @@ mod tests {
     /// Test that the Easy AI recognizes it can't defend
     fn test_easy_make_defense_move_cannot_defend() {
         let ai = AiPlayer::new(AiDifficulty::Easy);
-        let ai_hand = vec![Card::new(Suit::Hearts, Rank::Seven)];
-        let table_cards = vec![(Card::new(Suit::Hearts, Rank::Ten), None)];
+        let mut ai_hand = ArrayVec::new();
+        ai_hand.push(Card::new(Suit::Hearts, Rank::Seven));
+        let mut table_cards = ArrayVec::new();
+        table_cards.push((Card::new(Suit::Hearts, Rank::Ten), None));
         let game_state = create_test_game_state(ai_hand, table_cards, Suit::Spades);
 
         let defense_move = ai.make_defense_move(&game_state, 0);
@@ -118,13 +124,12 @@ mod tests {
     /// Test that the Medium AI will take cards if there are multiple high trumps
     fn test_medium_should_take_cards_to_save_high_trumps() {
         let ai = AiPlayer::new(AiDifficulty::Medium);
-        let ai_hand = vec![
-            Card::new(Suit::Spades, Rank::Jack), // High trump
-            Card::new(Suit::Hearts, Rank::Seven),
-        ];
-        let table_cards = vec![(Card::new(Suit::Diamonds, Rank::Ten), None)];
+        let mut ai_hand = ArrayVec::new();
+        ai_hand.push(Card::new(Suit::Spades, Rank::Jack)); // High trump
+        ai_hand.push(Card::new(Suit::Hearts, Rank::Seven));
+        let mut table_cards = ArrayVec::new();
+        table_cards.push((Card::new(Suit::Diamonds, Rank::Ten), None));
         let game_state = create_test_game_state(ai_hand, table_cards, Suit::Spades);
-
         assert!(ai.should_take_cards(&game_state, 0));
     }
 
@@ -132,13 +137,11 @@ mod tests {
     /// Test that the Medium AI can make an attack move with the lowest-ranking card and save the trump
     fn test_medium_make_attack_move_initial() {
         let ai = AiPlayer::new(AiDifficulty::Medium);
-        let ai_hand = vec![
-            Card::new(Suit::Hearts, Rank::Seven),
-            Card::new(Suit::Hearts, Rank::Eight),
-            Card::new(Suit::Spades, Rank::Six), // Trump
-        ];
-        let game_state = create_test_game_state(ai_hand, vec![], Suit::Spades);
-
+        let mut ai_hand = ArrayVec::new();
+        ai_hand.push(Card::new(Suit::Hearts, Rank::Seven));
+        ai_hand.push(Card::new(Suit::Hearts, Rank::Eight));
+        ai_hand.push(Card::new(Suit::Spades, Rank::Six)); // Trump
+        let game_state = create_test_game_state(ai_hand, ArrayVec::new(), Suit::Spades);
         let attack_move = ai.make_attack_move(&game_state, 0).unwrap();
         assert_eq!(attack_move.len(), 1);
         assert_eq!(attack_move[0].1, Card::new(Suit::Hearts, Rank::Seven));
@@ -148,16 +151,13 @@ mod tests {
     /// Test that the Hard AI will take cards if there are multiple high trumps
     fn test_hard_should_take_cards_strategically() {
         let ai = AiPlayer::new(AiDifficulty::Hard);
-        let ai_hand = vec![
-            Card::new(Suit::Spades, Rank::Jack), // High trump
-            Card::new(Suit::Hearts, Rank::Ace),
-        ];
-        let table_cards = vec![
-            (Card::new(Suit::Diamonds, Rank::Ten), None),
-            (Card::new(Suit::Clubs, Rank::Ten), None),
-        ];
+        let mut ai_hand = ArrayVec::new();
+        ai_hand.push(Card::new(Suit::Spades, Rank::Jack)); // High trump
+        ai_hand.push(Card::new(Suit::Hearts, Rank::Ace));
+        let mut table_cards = ArrayVec::new();
+        table_cards.push((Card::new(Suit::Diamonds, Rank::Ten), None));
+        table_cards.push((Card::new(Suit::Clubs, Rank::Ten), None));
         let game_state = create_test_game_state(ai_hand, table_cards, Suit::Spades);
-
         assert!(ai.should_take_cards(&game_state, 0));
     }
 
@@ -165,11 +165,11 @@ mod tests {
     /// Test that the Hard AI can make an attack move with the lowest-ranking card and save the trump
     fn test_hard_make_attack_move_exploit_weakness() {
         let ai = AiPlayer::new(AiDifficulty::Hard);
-        let ai_hand = vec![
-            Card::new(Suit::Hearts, Rank::Seven),
-            Card::new(Suit::Diamonds, Rank::Ten),
-        ];
-        let table_cards = vec![(Card::new(Suit::Hearts, Rank::Ten), None)];
+        let mut ai_hand = ArrayVec::new();
+        ai_hand.push(Card::new(Suit::Hearts, Rank::Seven));
+        ai_hand.push(Card::new(Suit::Diamonds, Rank::Ten));
+        let mut table_cards = ArrayVec::new();
+        table_cards.push((Card::new(Suit::Hearts, Rank::Ten), None));
         let mut game_state = create_test_game_state(ai_hand, table_cards, Suit::Spades);
         game_state
             .discard_pile

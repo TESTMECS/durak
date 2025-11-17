@@ -1,4 +1,5 @@
 use super::card::{Card, Suit};
+use arrayvec::ArrayVec;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PlayerType {
@@ -10,15 +11,15 @@ pub enum PlayerType {
 pub struct Player {
     pub name: String,
     pub player_type: PlayerType,
-    pub hand: Vec<Card>,
+    pub hand: ArrayVec<Card, 36>,
 }
 
 impl Player {
-    pub const fn new(name: String, player_type: PlayerType) -> Self {
+    pub fn new(name: String, player_type: PlayerType) -> Self {
         Self {
             name,
             player_type,
-            hand: Vec::new(),
+            hand: ArrayVec::new(),
         }
     }
     /*

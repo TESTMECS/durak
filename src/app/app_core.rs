@@ -25,17 +25,16 @@ pub struct App {
 impl App {
     pub fn new() -> Self {
         info("Creating new App instance");
-        let game_state = GameState::new();
         Self {
-            game_state,
+            game_state: GameState::new(),
             app_state: AppState::MainMenu,
             selected_card_idx: None,
             selected_cards: Vec::new(),
             ai_player: AiPlayer::new(AiDifficulty::Medium),
+            selected_difficulty: AiDifficulty::Medium,
             should_quit: false,
             show_debug: false,
             multiple_selection_mode: false,
-            selected_difficulty: AiDifficulty::Medium,
         }
     }
     /// Safely exits the game, restoring terminal state
@@ -67,14 +66,17 @@ impl App {
         }
     }
     /// Show rules on the main menu page.
+    #[inline]
     pub fn show_rules(&mut self) {
         self.app_state = AppState::RulesPage;
     }
     /// Backlink to the main menu from the menu pages.
+    #[inline]
     pub fn return_to_menu(&mut self) {
         self.app_state = AppState::MainMenu;
     }
     /// Show the difficulty select page.
+    #[inline]
     pub fn show_difficulty_select(&mut self) {
         self.app_state = AppState::DifficultySelect;
     }

@@ -1,6 +1,7 @@
 use super::card::{Card, Suit};
 use super::deck::Deck;
 use super::player::{Player, PlayerType};
+use arrayvec::ArrayVec;
 use std::collections::VecDeque;
 use std::fmt::Display;
 
@@ -22,8 +23,8 @@ impl Display for GamePhase {
 pub struct GameState {
     pub players: [Player; 2],
     pub deck: Deck,
-    pub discard_pile: Vec<Card>,
-    pub table_cards: Vec<(Card, Option<Card>)>, // (attacking card, defending card)
+    pub discard_pile: ArrayVec<Card, 36>,
+    pub table_cards: ArrayVec<(Card, Option<Card>), 12>, // (attacking card, defending card)
     pub current_attacker: usize,
     pub current_defender: usize,
     pub trump_suit: Option<Suit>,
@@ -43,8 +44,8 @@ impl GameState {
                 Player::new("Computer".to_string(), PlayerType::Computer),
             ],
             deck: Deck::new(),
-            discard_pile: Vec::new(),
-            table_cards: Vec::new(),
+            discard_pile: ArrayVec::new(),
+            table_cards: ArrayVec::new(),
             current_attacker: 0,
             current_defender: 0,
             trump_suit: None,
@@ -189,11 +190,17 @@ impl GameState {
         if all_defended {
             // All attacks successfully defended
             // Move cards from table to discard pile
-            let mut cards_to_discard = Vec::new();
-            for (attack, defense) in std::mem::take(&mut self.table_cards) {
-                cards_to_discard.push(attack);
-                if let Some(def_card) = defense {
-                    cards_to_discard.push(def_card);
+            let cards_to_discard = Vec::new();
+            // for (attack, defense) in std::mem::take(&mut self.table_cards) {
+            //     cards_to_discard.push(attack);
+            //     if let Some(def_card) = defense {
+            //         cards_to_discard.push(def_card);
+            //     }
+            // }
+            for (a, d) in self.table_cards.drain(..) {
+                self.discard_pile.push(a);
+                if let Some(x) = d {
+                    self.discard_pile.push(x);
                 }
             }
             self.discard_pile.extend(cards_to_discard);
@@ -343,33 +350,43 @@ impl GameState {
         }
     }
     // Getters
+    #[inline]
     pub fn players(&self) -> &[Player] {
         &self.players
     }
+    #[inline]
     pub fn players_mut(&mut self) -> &mut [Player; 2] {
         &mut self.players
     }
+    #[inline]
     pub fn deck(&self) -> &Deck {
         &self.deck
     }
+    #[inline]
     pub fn trump_suit(&self) -> Option<Suit> {
         self.trump_suit
     }
+    #[inline]
     pub fn table_cards(&self) -> &[(Card, Option<Card>)] {
         &self.table_cards
     }
+    #[inline]
     pub fn current_attacker(&self) -> usize {
         self.current_attacker
     }
+    #[inline]
     pub fn current_defender(&self) -> usize {
         self.current_defender
     }
+    #[inline]
     pub fn game_phase(&self) -> &GamePhase {
         &self.game_phase
     }
+    #[inline]
     pub fn winner(&self) -> Option<usize> {
         self.winner
     }
+    #[inline]
     #[allow(dead_code)]
     pub fn discard_pile(&self) -> &[Card] {
         &self.discard_pile
@@ -377,13 +394,9 @@ impl GameState {
     /// Helper method to force the game state into Attack phase
     /// Only used as an emergency measure to prevent freezes
     pub fn force_attack_phase(mut state: GameState) -> GameState {
-        //warn!("EMERGENCY: Forcing game to Attack phase");
         state.game_phase = GamePhase::Attack;
-        state.stuck_counter = 0; // Reset stuck counter when forcing attack phase
-        // Clear the table if needed
+        state.stuck_counter = 0;
         if !state.table_cards.is_empty() {
-            // No need to track the number of discarded cards
-            // Move cards to discard pile
             let mut cards_to_discard = Vec::new();
             for (attack, defense) in state.table_cards.drain(..) {
                 cards_to_discard.push(attack);
@@ -396,6 +409,7 @@ impl GameState {
         state
     }
     /// Helper method to set the game to defense phase
+    #[inline]
     pub fn set_phase_to_defense(&mut self, attacker_idx: usize, defender_idx: usize) {
         self.game_phase = GamePhase::Defense;
         self.current_attacker = attacker_idx;
