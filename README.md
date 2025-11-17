@@ -11,7 +11,3 @@ Durak is a card game played with 2-6 players using a 36-card deck (cards 6 throu
 ### Objective
 Get rid of all your cards. The last player with cards is the "durak" (fool).
 
-## Note !!
-1. Please report any issues. 
-2. I have made two other CLI durak games: [React/Ink/TS](https://github.com/TESTMECS/durakink) [BubbleTea/Go](https://github.com/TESTMECS/durakgo) . Both of which I found a lot faster iterations to develop and more fun.
-3. The Ai Strategy is specifically defined for this game. For the TS and Go versions I opted to use a Monte Carlo Tree Search - I've found this version more enjoyable to play against though.
