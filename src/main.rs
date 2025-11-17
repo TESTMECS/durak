@@ -22,7 +22,6 @@ fn main() -> Result<()> {
     execute!(stdout, EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
-    // Create app and run it
     let mut app = App::new();
     let res = app.run(&mut terminal);
     // At this point, safe_exit should have restored the terminal if

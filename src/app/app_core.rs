@@ -1,5 +1,6 @@
 use super::render::render_ui;
 use super::state::AppState;
+use crate::game::{AiDifficulty, AiPlayer, GamePhase, GameState};
 use crate::ui::debug_overlay::{debug, error, info};
 use crossterm::ExecutableCommand;
 use crossterm::terminal::{LeaveAlternateScreen, disable_raw_mode};
@@ -7,28 +8,24 @@ use ratatui::Terminal;
 use ratatui::backend::Backend;
 use std::io::{self, stdout};
 
-use crate::game::{AiDifficulty, AiPlayer, GamePhase, GameState, PlayerType};
-
 pub struct App {
-    pub game_state: GameState,
-    pub app_state: AppState,
+    pub game_state: GameState, // FAT
+    pub app_state: AppState,   // FAT
     pub selected_card_idx: Option<usize>,
     pub selected_cards: Vec<usize>,
-    pub ai_player: AiPlayer,
+    // Fine
     pub should_quit: bool,
     pub show_debug: bool,
     pub multiple_selection_mode: bool,
+    //
+    pub ai_player: AiPlayer,
     pub selected_difficulty: AiDifficulty,
 }
 
 impl App {
     pub fn new() -> Self {
         info("Creating new App instance");
-        let mut game_state = GameState::new();
-        info("Adding human player");
-        game_state.add_player("Player".to_string(), PlayerType::Human);
-        info("Adding computer player");
-        game_state.add_player("Computer".to_string(), PlayerType::Computer);
+        let game_state = GameState::new();
         Self {
             game_state,
             app_state: AppState::MainMenu,

@@ -20,7 +20,7 @@ impl Display for GamePhase {
 
 #[derive(Debug, Clone)]
 pub struct GameState {
-    pub players: Vec<Player>,
+    pub players: [Player; 2], // ? []
     pub deck: Deck,
     pub discard_pile: Vec<Card>,
     pub table_cards: Vec<(Card, Option<Card>)>, // (attacking card, defending card)
@@ -38,7 +38,10 @@ impl GameState {
     /// Important initalitzations are `Deck::new()` and `GamePhase::Setup`
     pub fn new() -> Self {
         Self {
-            players: Vec::new(),
+            players: [
+                Player::new("Player".to_string(), PlayerType::Human),
+                Player::new("Computer".to_string(), PlayerType::Computer),
+            ],
             deck: Deck::new(),
             discard_pile: Vec::new(),
             table_cards: Vec::new(),
@@ -49,11 +52,6 @@ impl GameState {
             winner: None,
             stuck_counter: 0, // Initialize counter
         }
-    }
-
-    /// Adds a new player to the `players` vector of the GameState
-    pub fn add_player(&mut self, name: String, player_type: PlayerType) {
-        self.players.push(Player::new(name, player_type));
     }
     /// Sets up the game by creating a new deck, shuffling it, and dealing 6 cards to each player.
     /// The player with the lowest trump card delt is determined as the starting attacker.
@@ -348,7 +346,7 @@ impl GameState {
     pub fn players(&self) -> &[Player] {
         &self.players
     }
-    pub fn players_mut(&mut self) -> &mut Vec<Player> {
+    pub fn players_mut(&mut self) -> &mut [Player; 2] {
         &mut self.players
     }
     pub fn deck(&self) -> &Deck {
@@ -382,7 +380,7 @@ impl GameState {
         //warn!("EMERGENCY: Forcing game to Attack phase");
         state.game_phase = GamePhase::Attack;
         state.stuck_counter = 0; // Reset stuck counter when forcing attack phase
-                                 // Clear the table if needed
+        // Clear the table if needed
         if !state.table_cards.is_empty() {
             // No need to track the number of discarded cards
             // Move cards to discard pile
