@@ -1,25 +1,21 @@
 use super::card::{Card, Suit};
-use arrayvec::ArrayVec;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PlayerType {
     Human,
     Computer,
 }
-
 #[derive(Debug, Clone)]
 pub struct Player {
     pub name: String,
     pub player_type: PlayerType,
-    pub hand: ArrayVec<Card, 36>,
+    pub hand: Vec<Card>,
 }
-
 impl Player {
     pub fn new(name: String, player_type: PlayerType) -> Self {
         Self {
             name,
             player_type,
-            hand: ArrayVec::new(),
+            hand: Vec::new(),
         }
     }
     /*

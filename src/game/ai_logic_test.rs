@@ -11,7 +11,7 @@ mod tests {
     // Helper function to create a game state for testing
     fn create_test_game_state(
         ai_hand: ArrayVec<Card, 36>,
-        table_cards: ArrayVec<(Card, Option<Card>), 12>,
+        table_cards: ArrayVec<(Card, Option<Card>), 24>,
         trump_suit: Suit,
     ) -> GameState {
         let game_state = GameState {
@@ -19,12 +19,12 @@ mod tests {
                 Player {
                     name: "AI".to_string(),
                     player_type: PlayerType::Computer,
-                    hand: ai_hand,
+                    hand: ai_hand.to_vec(),
                 },
                 Player {
                     name: "Human".to_string(),
                     player_type: PlayerType::Human,
-                    hand: ArrayVec::new(),
+                    hand: Vec::new(),
                 },
             ],
             deck: Deck {

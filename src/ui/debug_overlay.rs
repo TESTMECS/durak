@@ -1,4 +1,3 @@
-use lazy_static::lazy_static;
 use log::Level;
 use once_cell::sync::Lazy;
 use ratatui::{

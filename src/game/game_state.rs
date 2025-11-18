@@ -1,7 +1,6 @@
 use super::card::{Card, Suit};
 use super::deck::Deck;
 use super::player::{Player, PlayerType};
-use arrayvec::ArrayVec;
 use std::fmt::Display;
 
 #[repr(u8)]
@@ -22,8 +21,8 @@ impl Display for GamePhase {
 pub struct GameState {
     pub players: [Player; 2],
     pub deck: Deck,
-    pub discard_pile: ArrayVec<Card, 36>,
-    pub table_cards: ArrayVec<(Card, Option<Card>), 12>, // (attacking card, defending card)
+    pub discard_pile: Vec<Card>,
+    pub table_cards: Vec<(Card, Option<Card>)>, // (attacking card, defending card)
     pub current_attacker: usize,
     pub current_defender: usize,
     pub trump_suit: Option<Suit>,
@@ -43,8 +42,8 @@ impl GameState {
                 Player::new("Computer".to_string(), PlayerType::Computer),
             ],
             deck: Deck::new(),
-            discard_pile: ArrayVec::new(),
-            table_cards: ArrayVec::new(),
+            discard_pile: Vec::new(),
+            table_cards: Vec::new(),
             current_attacker: 0,
             current_defender: 0,
             trump_suit: None,

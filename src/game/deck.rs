@@ -1,4 +1,3 @@
-use arrayvec::ArrayVec;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -29,7 +28,7 @@ pub const FULL_DECK: [Card; 36] = build_full_deck();
 
 #[derive(Debug, Clone)]
 pub struct Deck {
-    pub cards: ArrayVec<Card, 36>,
+    pub cards: Vec<Card>,
     pub trump_suit: Option<Suit>,
 }
 impl Deck {
