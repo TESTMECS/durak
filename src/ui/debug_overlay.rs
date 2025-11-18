@@ -9,12 +9,10 @@ use ratatui::{
 };
 use std::fmt::Write;
 use std::sync::Mutex;
-// Buffer to hold our UI log messages
 lazy_static! {
     static ref UI_LOG_BUFFER: Mutex<Vec<(String, String, Level)>> = Mutex::new(Vec::new());
 }
 const BUFFER_LIMIT: usize = 100;
-
 #[allow(dead_code)]
 pub struct LogMessage {
     pub timestamp: String,

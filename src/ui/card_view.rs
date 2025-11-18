@@ -6,12 +6,10 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Widget},
 };
-
 pub struct CardView {
     card: Card,
     selected: bool,
 }
-
 impl CardView {
     pub fn new(card: Card) -> Self {
         Self {
@@ -19,13 +17,11 @@ impl CardView {
             selected: false,
         }
     }
-
     pub fn selected(mut self, selected: bool) -> Self {
         self.selected = selected;
         self
     }
 }
-
 impl Widget for CardView {
     fn render(self, area: Rect, buf: &mut Buffer) {
         if area.width < 5 || area.height < 3 {
@@ -57,13 +53,11 @@ impl Widget for CardView {
         rank_suit.render(inner_area, buf);
     }
 }
-
 pub struct CardRowView {
     cards: Vec<Card>,
     selected_idx: Option<usize>,
     multiple_selected: Option<Vec<usize>>,
 }
-
 impl CardRowView {
     pub fn new(cards: Vec<Card>) -> Self {
         Self {
@@ -81,7 +75,6 @@ impl CardRowView {
         self
     }
 }
-
 impl Widget for CardRowView {
     fn render(self, area: Rect, buf: &mut Buffer) {
         if area.width < 1 || area.height < 3 || self.cards.is_empty() {
@@ -123,17 +116,14 @@ impl Widget for CardRowView {
         }
     }
 }
-
 pub struct TableView {
     table_cards: Vec<(Card, Option<Card>)>,
 }
-
 impl TableView {
     pub fn new(table_cards: Vec<(Card, Option<Card>)>) -> Self {
         Self { table_cards }
     }
 }
-
 impl Widget for TableView {
     fn render(self, area: Rect, buf: &mut Buffer) {
         if area.width < 1 || area.height < 7 || self.table_cards.is_empty() {
