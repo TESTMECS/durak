@@ -1,5 +1,6 @@
 use lazy_static::lazy_static;
 use log::Level;
+use once_cell::sync::Lazy;
 use ratatui::{
     buffer::Buffer,
     layout::Rect,
@@ -9,9 +10,8 @@ use ratatui::{
 };
 use std::fmt::Write;
 use std::sync::Mutex;
-lazy_static! {
-    static ref UI_LOG_BUFFER: Mutex<Vec<(String, String, Level)>> = Mutex::new(Vec::new());
-}
+static UI_LOG_BUFFER: Lazy<Mutex<Vec<(String, String, Level)>>> =
+    Lazy::new(|| Mutex::new(Vec::with_capacity(BUFFER_LIMIT)));
 const BUFFER_LIMIT: usize = 100;
 #[allow(dead_code)]
 pub struct LogMessage {
@@ -147,7 +147,7 @@ impl Widget for DebugOverlay {
                 let start = len.saturating_sub(take);
                 buffer[start..len].to_vec()
             } else {
-                Vec::new()
+                Vec::with_capacity(BUFFER_LIMIT)
             }
         };
         // Create text for log messages

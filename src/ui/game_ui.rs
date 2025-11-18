@@ -23,17 +23,14 @@ impl<'a> GameUI<'a> {
             multiple_selected: None,
         }
     }
-
     pub fn select_card(mut self, idx: Option<usize>) -> Self {
         self.selected_idx = idx;
         self
     }
-
     pub fn with_multiple_selection(mut self, selected: &'a Vec<usize>) -> Self {
         self.multiple_selected = Some(selected);
         self
     }
-
     fn render_status_bar(&self, area: Rect, buf: &mut Buffer) {
         let phase_text = match self.game_state.game_phase() {
             GamePhase::Setup => "Setting up game...".to_string(),
@@ -55,15 +52,12 @@ impl<'a> GameUI<'a> {
                 }
             }
         };
-
         let trump_text = if let Some(trump_suit) = self.game_state.trump_suit() {
             format!("Trump: {}", trump_suit.symbol())
         } else {
             "No trump".to_string()
         };
-
         let deck_count = format!("Cards left: {}", self.game_state.deck().remaining());
-
         let status_line = Line::from(vec![
             Span::styled(phase_text, Style::default().fg(Color::Green)),
             Span::raw(" | "),
@@ -71,7 +65,6 @@ impl<'a> GameUI<'a> {
             Span::raw(" | "),
             Span::styled(deck_count, Style::default().fg(Color::Cyan)),
         ]);
-
         let paragraph = Paragraph::new(status_line)
             .block(
                 Block::default()
@@ -80,10 +73,8 @@ impl<'a> GameUI<'a> {
                     .title_alignment(Alignment::Center),
             )
             .alignment(ratatui::layout::Alignment::Center);
-
         paragraph.render(area, buf);
     }
-
     fn render_player_hand(&self, area: Rect, buf: &mut Buffer, player_idx: usize) {
         let player = &self.game_state.players()[player_idx];
         let player_name = player.name();
@@ -168,7 +159,6 @@ impl<'a> GameUI<'a> {
         para.render(area, buf);
     }
 }
-
 impl Widget for GameUI<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let vertical_layout = Layout::default()
