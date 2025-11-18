@@ -1,7 +1,7 @@
 use crate::app::state::AppState;
 use crate::game::GamePhase;
 use crossterm::event::KeyCode;
-
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppAction {
     // General Actions

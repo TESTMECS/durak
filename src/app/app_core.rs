@@ -9,8 +9,8 @@ use ratatui::backend::Backend;
 use std::io::{self, stdout};
 
 pub struct App {
-    pub game_state: GameState, // FAT
-    pub app_state: AppState,   // FAT
+    pub game_state: GameState,
+    pub app_state: AppState,
     pub selected_card_idx: Option<usize>,
     pub selected_cards: Vec<usize>,
     // Fine
@@ -44,10 +44,8 @@ impl App {
         if let Some(msg) = error_msg {
             error(format!("Game error: {}", msg));
         }
-        // Restore terminal to normal state
         disable_raw_mode()?;
         stdout().execute(LeaveAlternateScreen)?;
-        // If there was an error message, print it to stderr
         if let Some(msg) = error_msg {
             eprintln!("Error: {}", msg);
         }

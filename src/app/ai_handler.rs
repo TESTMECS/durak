@@ -1,4 +1,6 @@
 use super::app_core::App;
+use super::state::AppState;
+use crate::game::GameState;
 use crate::game::{GamePhase, PlayerType};
 use crate::ui::debug_overlay::debug;
 
@@ -8,12 +10,10 @@ pub fn process_ai_turn(app: &mut App) {
     while turn_counter < MAX_TURNS {
         turn_counter += 1;
         debug(format!("AI turn iteration {}", turn_counter));
-        // Check for game over - this also sets the winner
         if app.game_state.check_game_over() {
-            app.app_state = super::state::AppState::GameOver;
+            app.app_state = AppState::GameOver;
             return;
         }
-        // Get the current player based on game phase
         let current_player_idx = app.current_player_index();
         let is_ai_turn =
             app.game_state.players()[current_player_idx].player_type() == &PlayerType::Computer;
@@ -104,7 +104,7 @@ pub fn process_ai_turn(app: &mut App) {
             app.game_state.draw_cards();
             if *app.game_state.game_phase() == GamePhase::Drawing {
                 debug("Forcing transition from Drawing to Attack phase");
-                app.game_state = crate::game::GameState::force_attack_phase(app.game_state.clone());
+                GameState::force_attack_phase(&mut app.game_state);
             }
             if *app.game_state.game_phase() == GamePhase::Attack {
                 let attacker_idx = app.game_state.current_attacker();
@@ -124,7 +124,7 @@ pub fn process_ai_turn(app: &mut App) {
         if turn_counter >= MAX_TURNS - 1 {
             debug("Reached maximum AI turn iterations, forcing end to prevent issues");
             if *app.game_state.game_phase() == GamePhase::Drawing {
-                app.game_state = crate::game::GameState::force_attack_phase(app.game_state.clone());
+                GameState::force_attack_phase(&mut app.game_state);
             }
             return;
         }

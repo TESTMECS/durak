@@ -38,7 +38,10 @@ impl Player {
     pub fn player_type(&self) -> &PlayerType {
         &self.player_type
     }
-
+    #[inline]
+    pub fn is_human(&self) -> bool {
+        self.player_type == PlayerType::Human
+    }
     /*
      * Get the player hand
      * returns: &Vec<Card> where a card is a struct of rank and suit

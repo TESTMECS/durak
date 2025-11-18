@@ -4,6 +4,7 @@ use super::player::{Player, PlayerType};
 use arrayvec::ArrayVec;
 use std::fmt::Display;
 
+#[repr(u8)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum GamePhase {
     Setup,
@@ -17,7 +18,6 @@ impl Display for GamePhase {
         write!(f, "{:?}", self)
     }
 }
-
 #[derive(Debug, Clone)]
 pub struct GameState {
     pub players: [Player; 2],
@@ -330,20 +330,19 @@ impl GameState {
     }
     /// Helper method to force the game state into Attack phase
     /// Only used as an emergency measure to prevent freezes
-    pub fn force_attack_phase(mut state: GameState) -> GameState {
-        state.game_phase = GamePhase::Attack;
-        state.stuck_counter = 0;
-        if !state.table_cards.is_empty() {
+    pub fn force_attack_phase(&mut self) {
+        self.game_phase = GamePhase::Attack;
+        self.stuck_counter = 0;
+        if !self.table_cards.is_empty() {
             let mut cards_to_discard = Vec::new();
-            for (attack, defense) in state.table_cards.drain(..) {
+            for (attack, defense) in self.table_cards.drain(..) {
                 cards_to_discard.push(attack);
                 if let Some(def_card) = defense {
                     cards_to_discard.push(def_card);
                 }
             }
-            state.discard_pile.extend(cards_to_discard);
+            self.discard_pile.extend(cards_to_discard);
         }
-        state
     }
     /// Helper method to set the game to defense phase
     #[inline]

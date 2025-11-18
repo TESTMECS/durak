@@ -1,51 +1,36 @@
-/*
- * game_actions.rs - Game action handlers and mechanics
- *
- * This file contains functions for handling various game actions:
- * - Card selection mechanics
- * - Attack and defense phase handling
- * - Card playing logic
- * - Pass/take actions
- */
 use super::ai_handler::process_ai_turn;
 use super::app_core::App;
-use crate::game::card::Card;
-use crate::game::{GamePhase, PlayerType};
+use super::state::AppState;
+use crate::game::{AiDifficulty, AiPlayer, GamePhase, GameState, PlayerType, card::Card};
 use crate::ui::debug_overlay::{debug, error};
 impl App {
-    /// Entry point for starting a new game.
-    /// Sets the AppState to Playing and initializes the game state.
     pub fn start_game_action(&mut self) {
-        self.app_state = super::state::AppState::Playing;
+        self.app_state = AppState::Playing;
         self.game_state.setup_game();
-        // clear cards just in case
         self.selected_card_idx = None;
         self.selected_cards.clear();
         self.multiple_selection_mode = false;
-        // Create a new AI player with the selected difficulty
-        self.ai_player = crate::game::AiPlayer::new(self.selected_difficulty);
+        self.ai_player = AiPlayer::new(self.selected_difficulty);
         debug(format!(
             "Starting game with AI difficulty: {}",
             self.selected_difficulty
         ));
-        // Log the AI difficulty level characteristics
         match self.selected_difficulty {
-            crate::game::AiDifficulty::Easy => {
+            AiDifficulty::Easy => {
                 debug("Easy AI: Will play lowest cards, often take cards instead of defending");
             }
-            crate::game::AiDifficulty::Medium => {
+            AiDifficulty::Medium => {
                 debug(
                     "Medium AI: Will use basic strategy, manage trumps, and sometimes pass cards",
                 );
             }
-            crate::game::AiDifficulty::Hard => {
+            AiDifficulty::Hard => {
                 debug(
                     "Hard AI: Will strategically track cards, exploit weaknesses, and plan ahead",
                 );
             }
         }
         debug("Game started!");
-        // Process AI turn if AI goes first
         let current_player_idx = self.current_player_index();
         let is_ai_turn =
             self.game_state.players()[current_player_idx].player_type() == &PlayerType::Computer;
@@ -54,19 +39,16 @@ impl App {
             process_ai_turn(self);
         }
     }
-    /// Action function that runs when the user presses '->' or 'l' to select the next card.
-    /// Called by `game_loop.rs`
     pub fn select_next_card(&mut self) {
         if let Some(player) = self.game_state.players().get(self.current_player_index()) {
-            if player.player_type() == &PlayerType::Human {
+            if player.is_human() {
                 let hand_size = player.hand_size();
                 if hand_size > 0 {
                     let old_idx = self.selected_card_idx;
-                    self.selected_card_idx = match self.selected_card_idx {
-                        Some(idx) if idx < hand_size - 1 => Some(idx + 1),
-                        None => Some(0),
-                        Some(_) => Some(0), // Wrap around
-                    };
+                    self.selected_card_idx = Some(match self.selected_card_idx {
+                        Some(i) => (i + 1) % hand_size,
+                        None => 0,
+                    });
                     debug(format!(
                         "Select next: {:?} -> {:?}",
                         old_idx, self.selected_card_idx
@@ -75,11 +57,9 @@ impl App {
             }
         }
     }
-    /// Action function that runs when the user presses '<-' or 'h' to select the previous card.
-    /// Called by `game_loop.rs`
     pub fn select_prev_card(&mut self) {
         if let Some(player) = self.game_state.players().get(self.current_player_index()) {
-            if player.player_type() == &PlayerType::Human {
+            if player.is_human() {
                 let hand_size = player.hand_size();
                 if hand_size > 0 {
                     let old_idx = self.selected_card_idx;
@@ -96,41 +76,28 @@ impl App {
             }
         }
     }
-    /// Main entry point for Player attack and defense key options.
-    /// Calls `handle_attack_phase` or `handle_defense_phase` depending on the current game phase.
     pub fn play_card_action(&mut self) {
-        let current_player_idx = self.current_player_index();
-        if self.game_state.players()[current_player_idx].player_type() == &PlayerType::Human {
+        let idx = self.current_player_index();
+        let players = self.game_state.players();
+        let player = &players[idx];
+
+        if player.player_type() == &PlayerType::Human {
             match *self.game_state.game_phase() {
                 GamePhase::Attack => {
-                    match self.handle_attack_phase(current_player_idx) {
-                        Ok(_) => {
-                            // If successful attack, game will transition to Defense phase
-                            // Process AI's turn if they are the defender
-                            process_ai_turn(self);
-                        }
-                        Err(e) => {
-                            debug(format!("Attack failed: {}", e));
-                            // Not a fatal error, just log it and continue
-                            // Only non-fatal game rule errors should reach here
-                        }
+                    if self.handle_attack_phase(idx).is_ok() {
+                        process_ai_turn(self);
                     }
                 }
                 GamePhase::Defense => {
-                    match self.handle_defense_phase(current_player_idx) {
+                    match self.handle_defense_phase(idx) {
                         Ok(_) => {
-                            // After defense, check game state
                             if *self.game_state.game_phase() == GamePhase::Drawing {
-                                // If drawing phase, proceed with drawing
                                 self.game_state.draw_cards();
-                                // After drawing, process AI's turn if they are next
                                 process_ai_turn(self);
                             } else if *self.game_state.game_phase() == GamePhase::Defense {
-                                // Check if a different player is now defending (pass occurred)
                                 let current_defender = self.game_state.current_defender();
-                                if current_defender != current_player_idx {
+                                if current_defender != idx {
                                     debug("Detected pass - different player now defending");
-                                    // Check if AI is now the defender
                                     let is_ai_defender =
                                         self.game_state.players()[current_defender].player_type()
                                             == &PlayerType::Computer;
@@ -195,8 +162,7 @@ impl App {
             self.game_state.draw_cards();
             if *self.game_state.game_phase() == GamePhase::Drawing {
                 debug("Drawing phase stuck, forcing Attack");
-                self.game_state =
-                    crate::game::GameState::force_attack_phase(self.game_state.clone());
+                GameState::force_attack_phase(&mut self.game_state);
             }
             if self.game_state.check_game_over() {
                 self.app_state = super::state::AppState::GameOver;
@@ -269,7 +235,6 @@ impl App {
                                 .any(|(_, defense)| defense.is_none());
                             if all_defended {
                                 debug("All attacks defended - discarding cards from table");
-                                // Get all cards from the table for discarding
                                 let cards_to_discard: Vec<(usize, Card)> = self
                                     .game_state
                                     .table_cards()
@@ -279,7 +244,6 @@ impl App {
                                         defense.map(|card| (idx, card))
                                     })
                                     .collect();
-                                // Discard the cards, which will also update game phase
                                 self.game_state.discard_cards(cards_to_discard);
                                 debug("All attacks defended!");
                                 Ok(())

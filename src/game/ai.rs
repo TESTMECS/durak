@@ -4,6 +4,7 @@ use crate::ui::debug_overlay::debug;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AiDifficulty {
     Easy,
@@ -19,7 +20,6 @@ impl Display for AiDifficulty {
         }
     }
 }
-
 trait AiStrategy {
     fn should_take_cards(&self, game_state: &GameState, player_idx: usize) -> bool;
 

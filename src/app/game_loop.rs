@@ -1,11 +1,3 @@
-/*
- * game_loop.rs - Main game loop and event handling
- *
- * This file contains the main game loop and event handling logic:
- * - Processing user input
- * - Rendering the UI
- * - Main event loop with input polling
- */
 use super::app_core::App;
 use super::input::{AppAction, handle_key_input};
 use crate::ui::debug_overlay::{error, trace};

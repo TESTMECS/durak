@@ -1,12 +1,12 @@
-use crate::app::state::AppState; // Import AppState
 use crate::app::App; // Import App from the app module
+use crate::app::state::AppState; // Import AppState
 use crate::ui::debug_overlay::DebugOverlay;
 use crate::ui::game_ui::GameUI;
+use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
 use ratatui::text::Line;
 use ratatui::widgets::{Block, Borders, Paragraph};
-use ratatui::Frame;
 /// Renders the UI for the game based on the matching AppState.
 pub fn render_ui(app: &App, f: &mut Frame<'_>) {
     let area = f.size();
@@ -80,7 +80,9 @@ pub fn render_ui(app: &App, f: &mut Frame<'_>) {
                 Line::from(""),
                 Line::from(" "),
                 Line::from("Objective:"),
-                Line::from("Get rid of all your cards. The last player with cards is the 'durak' (fool)."),
+                Line::from(
+                    "Get rid of all your cards. The last player with cards is the 'durak' (fool).",
+                ),
                 Line::from(" "),
                 Line::from("Setup:"),
                 Line::from("- Each player gets 6 cards from a 36-card deck (6 to Ace)"),
@@ -88,14 +90,28 @@ pub fn render_ui(app: &App, f: &mut Frame<'_>) {
                 Line::from("- Player with lowest trump card goes first"),
                 Line::from(" "),
                 Line::from("Gameplay:"),
-                Line::from("- Attacker plays a card; defender must beat it with higher card of same suit or trump"),
-                Line::from("- Passing: Defender can PASS a card by playing same rank (7♠ → 7♥) to the next player"),
-                Line::from("- When a pass occurs, the original attacker must now defend against both cards"),
-                Line::from("- After successful defense, attacker can add cards of the same rank as those on table"),
-                Line::from("- Defender can defend against multiple cards if they have matching cards"),
-                Line::from("- If defender can't or won't defend, they pick up all cards on the table"),
+                Line::from(
+                    "- Attacker plays a card; defender must beat it with higher card of same suit or trump",
+                ),
+                Line::from(
+                    "- Passing: Defender can PASS a card by playing same rank (7♠ → 7♥) to the next player",
+                ),
+                Line::from(
+                    "- When a pass occurs, the original attacker must now defend against both cards",
+                ),
+                Line::from(
+                    "- After successful defense, attacker can add cards of the same rank as those on table",
+                ),
+                Line::from(
+                    "- Defender can defend against multiple cards if they have matching cards",
+                ),
+                Line::from(
+                    "- If defender can't or won't defend, they pick up all cards on the table",
+                ),
                 Line::from("- After successful defense, defender becomes next attacker"),
-                Line::from("- Players draw after each round to maintain 6 cards (attacker draws first)"),
+                Line::from(
+                    "- Players draw after each round to maintain 6 cards (attacker draws first)",
+                ),
                 Line::from(" "),
                 Line::from("Multiple Card Attacks:"),
                 Line::from("- Press 'm' to toggle multiple selection mode"),
@@ -105,7 +121,9 @@ pub fn render_ui(app: &App, f: &mut Frame<'_>) {
                 Line::from("- You cannot attack with more cards than the defender has in hand"),
                 Line::from(" "),
                 Line::from("End Game:"),
-                Line::from("- Once deck is empty and a player has no cards left, that player is out"),
+                Line::from(
+                    "- Once deck is empty and a player has no cards left, that player is out",
+                ),
                 Line::from("- The last player with cards is the 'durak'"),
                 Line::from(" "),
                 Line::from("Press 'b' to go back to the main menu"),
