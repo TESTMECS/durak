@@ -7,11 +7,13 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Widget},
 };
+use std::fmt::Write;
 use std::sync::Mutex;
 // Buffer to hold our UI log messages
 lazy_static! {
     static ref UI_LOG_BUFFER: Mutex<Vec<(String, String, Level)>> = Mutex::new(Vec::new());
 }
+const BUFFER_LIMIT: usize = 100;
 
 #[allow(dead_code)]
 pub struct LogMessage {
@@ -28,6 +30,26 @@ pub enum LogLevel {
     Debug,
     Trace,
 }
+static LEVEL_STR: [&str; 5] = ["ERROR", "WARN ", "INFO ", "DEBUG", "TRACE"];
+static LEVEL_COLOR: [Color; 5] = [
+    Color::Red,
+    Color::Yellow,
+    Color::Green,
+    Color::Blue,
+    Color::DarkGray,
+];
+const LEVEL_MAP: [Level; 5] = [
+    Level::Error,
+    Level::Warn,
+    Level::Info,
+    Level::Debug,
+    Level::Trace,
+];
+
+#[inline]
+fn to_sys_level(l: LogLevel) -> Level {
+    LEVEL_MAP[l as usize]
+}
 
 impl From<Level> for LogLevel {
     fn from(level: Level) -> Self {
@@ -39,6 +61,13 @@ impl From<Level> for LogLevel {
             Level::Trace => LogLevel::Trace,
         }
     }
+}
+
+pub fn make_timestamp() -> String {
+    let now = chrono::Local::now();
+    let mut s = String::with_capacity(16);
+    write!(s, "{}", now.format("%H:%M:%S%.3f")).unwrap();
+    s
 }
 
 // Logging functions that log to both the regular system and the UI overlay
@@ -69,26 +98,13 @@ pub fn trace<S: AsRef<str>>(message: S) {
 
 // Add a message to our UI log buffer
 fn log_message(message: &str, level: LogLevel) {
-    // Create timestamp
-    let now = chrono::Local::now();
-    let timestamp = now.format("%H:%M:%S%.3f").to_string();
-
+    let timestamp = make_timestamp();
     if let Ok(mut buffer) = UI_LOG_BUFFER.lock() {
-        // Keep only the last 100 messages to avoid memory issues
-        if buffer.len() >= 100 {
-            buffer.remove(0);
+        if buffer.len() == BUFFER_LIMIT {
+            buffer.pop();
         }
-
-        // Convert LogLevel to log::Level for storage
-        let log_level = match level {
-            LogLevel::Error => Level::Error,
-            LogLevel::Warn => Level::Warn,
-            LogLevel::Info => Level::Info,
-            LogLevel::Debug => Level::Debug,
-            LogLevel::Trace => Level::Trace,
-        };
-
-        buffer.push((timestamp, message.to_string(), log_level));
+        let obj = (timestamp, message.to_string(), to_sys_level(level));
+        buffer.insert(0, obj);
     }
 }
 
@@ -98,16 +114,6 @@ pub struct DebugOverlay {}
 impl DebugOverlay {
     pub fn new() -> Self {
         Self {}
-    }
-
-    fn get_log_color(level: LogLevel) -> Color {
-        match level {
-            LogLevel::Error => Color::Red,
-            LogLevel::Warn => Color::Yellow,
-            LogLevel::Info => Color::Green,
-            LogLevel::Debug => Color::Blue,
-            LogLevel::Trace => Color::DarkGray,
-        }
     }
 }
 
@@ -136,36 +142,28 @@ impl Widget for DebugOverlay {
         // Render the block background
         debug_block.render(log_area, buf);
         // Get log messages from our buffer
-        let messages = if let Ok(buffer) = UI_LOG_BUFFER.lock() {
-            buffer.clone()
-        } else {
-            Vec::new()
+        let messages = {
+            if let Ok(buffer) = UI_LOG_BUFFER.lock() {
+                let take = inner_area.height as usize;
+                let len = buffer.len();
+                let start = len.saturating_sub(take);
+                buffer[start..len].to_vec()
+            } else {
+                Vec::new()
+            }
         };
         // Create text for log messages
-        let mut text = Vec::new();
-        for (timestamp, message, level) in
-            messages.into_iter().rev().take(inner_area.height as usize)
-        {
+        let mut text = Vec::with_capacity(inner_area.height as usize);
+        for msg in messages.into_iter().rev() {
+            let (timestamp, message, level) = msg;
             let log_level = LogLevel::from(level);
-            let level_str = format!(
-                "[{}]",
-                match log_level {
-                    LogLevel::Error => "ERROR",
-                    LogLevel::Warn => "WARN ",
-                    LogLevel::Info => "INFO ",
-                    LogLevel::Debug => "DEBUG",
-                    LogLevel::Trace => "TRACE",
-                }
-            );
+            let i = log_level as usize;
             let line = Line::from(vec![
                 Span::styled(
                     format!("{} ", timestamp),
                     Style::default().fg(Color::DarkGray),
                 ),
-                Span::styled(
-                    format!("{} ", level_str),
-                    Style::default().fg(Self::get_log_color(log_level)),
-                ),
+                Span::styled(LEVEL_STR[i], Style::default().fg(LEVEL_COLOR[i])),
                 Span::raw(message),
             ]);
             text.push(line);
