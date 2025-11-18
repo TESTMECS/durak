@@ -3,7 +3,6 @@ use crate::game::game_state::GameState;
 use crate::ui::debug_overlay::debug;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Display;
-
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AiDifficulty {
@@ -22,7 +21,6 @@ impl Display for AiDifficulty {
 }
 trait AiStrategy {
     fn should_take_cards(&self, game_state: &GameState, player_idx: usize) -> bool;
-
     fn make_attack_move(
         &self,
         game_state: &GameState,
@@ -35,14 +33,10 @@ trait AiStrategy {
         player_idx: usize,
     ) -> Option<Vec<(usize, Card)>>; //Always will return cards to attack with or an error.
 }
-
 struct EasyStrategy;
 struct MediumStrategy;
 struct HardStrategy;
-
 impl AiStrategy for EasyStrategy {
-    /// Easy AI follows the specific logic: if *any* single attacking card cannot be beaten,
-    /// immediately decide to pick up all cards.
     fn should_take_cards(&self, game_state: &GameState, player_idx: usize) -> bool {
         let player = &game_state.players()[player_idx];
         let hand = player.hand();
@@ -79,7 +73,6 @@ impl AiStrategy for EasyStrategy {
         }
         false
     }
-    /// Easy AI plays the lowest-ranking playable card (non-trump preferred)
     fn make_attack_move(
         &self,
         game_state: &GameState,
@@ -142,7 +135,6 @@ impl AiStrategy for EasyStrategy {
         // Should never reach here if hand is not empty
         Some(vec![(0, hand[0])])
     }
-    /// Easy AI logic: simply use the lowest possible card that can defend. It doesn't save trumps strategically
     fn make_defense_move(
         &self,
         game_state: &GameState,

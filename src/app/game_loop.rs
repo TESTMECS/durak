@@ -1,11 +1,12 @@
 use super::app_core::App;
 use super::input::{AppAction, handle_key_input};
+use crate::game::AiDifficulty;
 use crate::ui::debug_overlay::{error, trace};
 use crossterm::event::{self, Event, KeyCode, KeyEventKind};
 use ratatui::Terminal;
 use ratatui::backend::Backend;
 use std::io;
-
+use std::time::Duration;
 impl App {
     /// On key input, check if there is an action mapped to the key and process it
     pub fn on_key(&mut self, key: KeyCode) {
@@ -28,15 +29,9 @@ impl App {
             AppAction::ToggleDebug => self.toggle_debug(),
             AppAction::ShowRules => self.show_rules(),
             AppAction::ShowDifficultySelect => self.show_difficulty_select(),
-            AppAction::SelectEasyDifficulty => {
-                self.select_difficulty(crate::game::AiDifficulty::Easy)
-            }
-            AppAction::SelectMediumDifficulty => {
-                self.select_difficulty(crate::game::AiDifficulty::Medium)
-            }
-            AppAction::SelectHardDifficulty => {
-                self.select_difficulty(crate::game::AiDifficulty::Hard)
-            }
+            AppAction::SelectEasyDifficulty => self.select_difficulty(AiDifficulty::Easy),
+            AppAction::SelectMediumDifficulty => self.select_difficulty(AiDifficulty::Medium),
+            AppAction::SelectHardDifficulty => self.select_difficulty(AiDifficulty::Hard),
             AppAction::ReturnToMenu => self.return_to_menu(),
             AppAction::SelectNextCard => self.select_next_card(),
             AppAction::SelectPrevCard => self.select_prev_card(),
@@ -56,7 +51,6 @@ impl App {
             AppAction::AcknowledgeDraw => self.acknowledge_draw_action(),
         }
     }
-
     /// Main game loop
     pub fn run<B: Backend>(&mut self, terminal: &mut Terminal<B>) -> io::Result<()> {
         while !self.should_quit {
@@ -66,13 +60,12 @@ impl App {
                 return self.safe_exit(Some(&format!("Render error: {}", e)));
             }
             // Read user input every 100ms
-            match event::poll(std::time::Duration::from_millis(100)) {
+            match event::poll(Duration::from_millis(100)) {
                 Ok(has_event) => {
                     if has_event {
                         match event::read() {
                             Ok(Event::Key(key)) => {
                                 if key.kind == KeyEventKind::Press {
-                                    // Process key input - if critical errors occur they will trigger safe_exit
                                     self.on_key(key.code);
                                 }
                             }

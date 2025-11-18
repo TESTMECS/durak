@@ -31,10 +31,7 @@ impl App {
             }
         }
         debug("Game started!");
-        let current_player_idx = self.current_player_index();
-        let is_ai_turn =
-            self.game_state.players()[current_player_idx].player_type() == &PlayerType::Computer;
-        if is_ai_turn {
+        if self.is_ai() {
             debug("AI goes first");
             process_ai_turn(self);
         }
@@ -466,5 +463,10 @@ impl App {
             .enumerate()
             .find(|&(_, &c)| c == card)
             .map(|(idx, _)| idx)
+    }
+
+    pub fn is_ai(&self) -> bool {
+        self.game_state.players()[self.current_player_index()].player_type()
+            == &PlayerType::Computer
     }
 }

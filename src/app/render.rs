@@ -1,5 +1,5 @@
-use crate::app::App; // Import App from the app module
-use crate::app::state::AppState; // Import AppState
+use crate::app::App;
+use crate::app::state::AppState;
 use crate::ui::debug_overlay::DebugOverlay;
 use crate::ui::game_ui::GameUI;
 use ratatui::Frame;
@@ -7,7 +7,6 @@ use ratatui::layout::{Constraint, Direction, Layout};
 use ratatui::style::{Color, Style};
 use ratatui::text::Line;
 use ratatui::widgets::{Block, Borders, Paragraph};
-/// Renders the UI for the game based on the matching AppState.
 pub fn render_ui(app: &App, f: &mut Frame<'_>) {
     let area = f.size();
     match app.app_state {
@@ -146,14 +145,12 @@ pub fn render_ui(app: &App, f: &mut Frame<'_>) {
             f.render_widget(game_ui, area);
         }
         AppState::GameOver => {
-            // Create the winner message
             let winner_message = if let Some(winner_idx) = app.game_state.winner() {
                 let winner_name = &app.game_state.players()[winner_idx].name();
                 format!("{} is the winner!", winner_name)
             } else {
                 "Game Over!".to_string()
             };
-            // Layout for the game over screen
             let layout = Layout::default()
                 .direction(Direction::Vertical)
                 .constraints([

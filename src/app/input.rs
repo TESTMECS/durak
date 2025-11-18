@@ -4,30 +4,24 @@ use crossterm::event::KeyCode;
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AppAction {
-    // General Actions
     Quit,
     ToggleDebug,
-    // Main Menu Actions
     StartGame,
     ShowRules,
     ShowDifficultySelect,
     SelectEasyDifficulty,
     SelectMediumDifficulty,
     SelectHardDifficulty,
-    // Rules Page Actions
     ReturnToMenu,
-    // Playing Actions
     SelectNextCard,
     SelectPrevCard,
     ToggleMultiSelect,
     ToggleCardSelection,
-    PlaySelectedCard, // Covers both single and multi-select Enter press
-    PassTurn,         // Covers 'p' key
-    TakeCards,        // Covers 't' key
-    // Game Over Actions
+    PlaySelectedCard,
+    PassTurn,
+    TakeCards,
     StartNewGame,
-    // Drawing Phase Actions
-    AcknowledgeDraw, // Any key during drawing
+    AcknowledgeDraw,
 }
 /// Handle User Input depending on the current AppState and GamePhase
 pub fn handle_key_input(
@@ -35,7 +29,6 @@ pub fn handle_key_input(
     game_phase: &GamePhase,
     key: KeyCode,
 ) -> Option<AppAction> {
-    // Handle global keys first
     match key {
         KeyCode::Char('q') | KeyCode::Char('Q') => return Some(AppAction::Quit),
         _ => {}
