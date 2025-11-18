@@ -8,13 +8,11 @@ use ratatui::{
     text::{Line, Span},
     widgets::{Block, Borders, Paragraph, Widget},
 };
-
 pub struct GameUI<'a> {
     game_state: &'a GameState,
     selected_idx: Option<usize>,
     multiple_selected: Option<&'a Vec<usize>>,
 }
-
 impl<'a> GameUI<'a> {
     pub fn new(game_state: &'a GameState) -> Self {
         Self {
